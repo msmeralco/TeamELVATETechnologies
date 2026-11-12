@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meralco 2D Spatial Load Twin & Bill Minimizer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script>
+/* Theme: Meralco Go light palette (orange / cream / warm ink).
+   The zinc scale is inverted to the warm light palette so every existing
+   zinc-* utility automatically follows the new theme. */
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'], display: ['Poppins', 'sans-serif'] },
+      colors: {
+        brand: { orange: '#ff6a00', orangeLight: '#ff9a3d', tint: '#fff3e8', ink: '#1f1a17', muted: '#6c625b', line: '#f0e4da', cyanSoft: '#e4f6fb' },
+        zinc: { 100: '#1f1a17', 200: '#2b2420', 300: '#4a413b', 400: '#6c625b', 500: '#8a7f77', 600: '#b8aca3', 700: '#e6d6c8', 800: '#f0e4da', 900: '#fcfaf8', 950: '#ffffff' },
+        orange: { 400: '#ff6a00', 500: '#ff7f1f', 600: '#ff6a00' },
+        emerald: { 300: '#047857', 400: '#059669' },
+        cyan: { 200: '#155e75', 300: '#0e7490', 400: '#0891b2' },
+        amber: { 300: '#b45309', 400: '#d97706' },
+        red: { 400: '#dc2626' },
+        blue: { 400: '#2563eb' }
+      }
+    }
+  }
+}
+</script>
+<style>
+html, body { width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; background: #fcfaf8; color: #1f1a17; font-family: 'Inter', sans-serif; user-select: none; }
+::selection { background: #ff6a00; color: #ffffff; }
+.bg-spatial-grid {
+  background-color: #fcfaf8;
+  background-image:
+    radial-gradient(circle at 88% 10%, rgba(255,106,0,0.14) 0%, transparent 45%),
+    radial-gradient(circle at 10% 80%, rgba(255,154,61,0.12) 0%, transparent 45%),
+    linear-gradient(to right, rgba(240,228,218,0.75) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(240,228,218,0.75) 1px, transparent 1px);
+  background-size: auto, auto, 44px 44px, 44px 44px;
+}
+.glass-hud { background: rgba(255,255,255,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid #f0e4da; box-shadow: 0 24px 60px -25px rgba(255,106,0,0.25), 0 6px 20px rgba(31,26,23,0.04); }
+.node-card { position: absolute; width: 280px; background: rgba(255,255,255,0.97); backdrop-filter: blur(12px); border: 1px solid #f0e4da; border-radius: 14px; box-shadow: 0 18px 40px -20px rgba(255,106,0,0.25), 0 4px 14px rgba(31,26,23,0.05); transition: border-color .15s, box-shadow .15s; z-index: 10; }
+.node-card:hover { border-color: rgba(255,106,0,0.5); z-index: 20; }
+.node-card.dragging { border-color: #ff6a00; box-shadow: 0 15px 40px rgba(255,106,0,0.35); z-index: 30; }
+@keyframes dashFlow { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+.power-line-bg { stroke: #f0e4da; stroke-width: 2px; fill: none; }
+.power-line-flow { stroke: #ff6a00; stroke-width: 2.5px; stroke-dasharray: 6 6; animation: dashFlow .8s linear infinite; fill: none; }
+.power-line-high { stroke: #ff9a3d; stroke-width: 3px; stroke-dasharray: 8 4; animation: dashFlow .5s linear infinite; fill: none; }
+input[type="range"] { -webkit-appearance: none; appearance: none; background: #f0e4da; border-radius: 9999px; height: 6px; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #ff6a00; border: 3px solid #ffffff; cursor: pointer; box-shadow: 0 2px 6px rgba(255,106,0,.45); }
+.drag-item-token { cursor: grab; }
+.spatial-drop-active { outline: 2px dashed rgba(255,106,0,0.45); outline-offset: -8px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: #e6d6c8; border-radius: 4px; }
+select option { background: #ffffff; color: #1f1a17; }
+</style>
+</head>
+<body class="bg-spatial-grid flex flex-col antialiased">
+<div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+<!-- Custom Appliance Modal -->
+<div id="customModal" class="fixed inset-0 bg-brand-ink/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="glass-hud w-full max-w-md rounded-2xl p-6 space-y-4">
+    <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+      <h3 class="font-bold text-brand-ink text-base">Add Custom Appliance Token</h3>
+      <button onclick="toggleModal(false)" class="text-zinc-400 hover:text-brand-ink"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <form id="customForm" onsubmit="handleCustomSubmit(event)" class="space-y-3 text-xs">
+      <div><label class="text-zinc-300 block mb-1">Appliance Name</label>
+        <input type="text" id="custName" required placeholder="e.g. Electric Vehicle Charger, Pool Pump" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-brand-ink focus:outline-none focus:border-orange-500"></div>
+      <div><label class="text-zinc-300 block mb-1">Brand (optional)</label>
+        <input type="text" id="custBrand" placeholder="e.g. Samsung" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-brand-ink focus:outline-none focus:border-orange-500"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-zinc-300 block mb-1">Power Draw (W)</label>
+          <input type="number" id="custWatts" required min="1" max="20000" placeholder="3500" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-brand-ink focus:outline-none focus:border-orange-500"></div>
+        <div><label class="text-zinc-300 block mb-1">Category</label>
+          <select id="custCat" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-brand-ink focus:outline-none focus:border-orange-500">
+            <option>Cooling</option><option>Kitchen</option><option>Office</option><option>Laundry</option><option>Entertainment</option><option>Lighting</option><option>Bath</option><option>Custom</option></select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-zinc-300 block mb-1">Default Daily Hours</label>
+          <input type="number" id="custHours" required min="0.5" max="24" step="0.5" value="4" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-brand-ink focus:outline-none focus:border-orange-500"></div>
+        <div><label class="text-zinc-300 block mb-1">Priority Tier</label>
+          <select id="custPriority" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-brand-ink focus:outline-none focus:border-orange-500">
+            <option value="1">P1 - Essential</option><option value="2" selected>P2 - Moderate Flex</option><option value="3">P3 - High Flex</option></select></div>
+      </div>
+      <div class="flex items-center gap-2"><input type="checkbox" id="custIsAC" class="accent-orange-500"><label for="custIsAC" class="text-zinc-300">Applies Cooling Degree Day (CDD) thermal penalty</label></div>
+      <div class="flex justify-end gap-2 pt-3 border-t border-zinc-800">
+        <button type="button" onclick="toggleModal(false)" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-gradient-to-r from-brand-orange to-brand-orangeLight hover:opacity-90 text-white font-semibold rounded-lg">Add Token</button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- TOP HEADER (Meralco Go style) -->
+<header class="fixed top-0 inset-x-0 z-40 h-20 bg-white/90 backdrop-blur-md border-b border-brand-line">
+  <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-4">
+    <a href="#" class="flex items-center gap-3 group shrink-0">
+      <div class="w-11 h-11 rounded-2xl text-white grid place-items-center font-display font-bold text-xl bg-gradient-to-br from-brand-orange to-brand-orangeLight shadow-md shadow-brand-orange/30 group-hover:scale-105 transition-transform">M</div>
+      <div>
+        <span class="font-display font-bold text-xl tracking-tight text-brand-ink block leading-none">Meralco Go</span>
+        <span class="text-[11px] font-medium text-brand-muted block mt-1">Smart Energy Portal</span>
+      </div>
+    </a>
+    <!-- Controls: inline on desktop, dropdown on mobile -->
+    <div id="headerControls" class="hidden lg:flex items-center gap-3 text-xs max-lg:absolute max-lg:top-20 max-lg:inset-x-0 max-lg:flex-wrap max-lg:bg-white max-lg:border-b max-lg:border-brand-line max-lg:p-4">
+      <div class="flex items-center bg-brand-tint/70 border border-brand-line rounded-full p-1 gap-1">
+        <button onclick="loadPreset('wfh')" class="px-3 py-1.5 rounded-full font-medium text-brand-ink hover:bg-white">WFH</button>
+        <button onclick="loadPreset('summer')" class="px-3 py-1.5 rounded-full font-medium text-amber-400 hover:bg-white">Summer</button>
+        <button onclick="loadPreset('eco')" class="px-3 py-1.5 rounded-full font-medium text-emerald-400 hover:bg-white">Eco</button>
+        <button onclick="clearCanvasNodes()" class="px-3 py-1.5 rounded-full font-medium text-red-400 hover:bg-white">Clear</button>
+      </div>
+      <div class="flex items-center gap-3 font-mono">
+        <span>Rate: <span class="text-orange-400 font-bold">₱</span><input type="number" id="inputRate" value="11.85" step="0.05" min="5" max="30" oninput="recalculate()" class="w-16 bg-zinc-950 border border-zinc-800 rounded-lg px-1.5 py-0.5 text-orange-400 font-bold focus:outline-none focus:border-orange-500"></span>
+        <span>Days: <input type="number" id="inputDays" value="30" min="28" max="33" oninput="recalculate()" class="w-12 bg-zinc-950 border border-zinc-800 rounded-lg px-1.5 py-0.5 font-bold focus:outline-none focus:border-orange-500"></span>
+        <span>Temp: <input type="number" id="inputTemp" value="32.0" step="0.5" min="20" max="45" oninput="recalculate()" class="w-14 bg-zinc-950 border border-zinc-800 rounded-lg px-1.5 py-0.5 text-cyan-400 font-bold focus:outline-none focus:border-cyan-500"><span class="text-cyan-400 font-bold"> °C</span></span>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="toggleDockLeft()" title="Toggle Catalog" class="p-2 rounded-full border border-brand-line hover:bg-brand-tint"><i data-lucide="panel-left" class="w-4 h-4"></i></button>
+        <button onclick="toggleDockRight()" title="Toggle Telemetry" class="p-2 rounded-full border border-brand-line hover:bg-brand-tint"><i data-lucide="panel-right" class="w-4 h-4"></i></button>
+      </div>
+    </div>
+    <div class="flex items-center gap-2.5">
+      <button onclick="runOptimization()" class="px-5 py-2.5 rounded-full bg-gradient-to-r from-brand-orange to-brand-orangeLight text-white font-display font-semibold text-sm shadow-md shadow-brand-orange/25 hover:-translate-y-0.5 transition-all active:scale-95">Optimize</button>
+      <button onclick="const c=document.getElementById('headerControls');c.classList.toggle('hidden');c.classList.toggle('flex')" aria-label="Toggle menu" class="lg:hidden p-2.5 rounded-xl border border-brand-line text-brand-ink hover:bg-brand-tint">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </div>
+</header>
+<!-- CANVAS -->
+<main id="spatialCanvas" class="w-full h-full relative overflow-hidden">
+  <svg id="svgConnectorLayer" class="w-full h-full absolute inset-0 pointer-events-none z-0"></svg>
+  <div id="meterHub" class="absolute z-20 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+    <div class="relative flex items-center justify-center">
+      <div class="w-24 h-24 rounded-full bg-orange-500/10 border border-orange-500/30 animate-ping absolute"></div>
+      <div class="w-20 h-20 rounded-2xl bg-zinc-950 border-2 border-orange-500 shadow-2xl shadow-orange-500/40 flex flex-col items-center justify-center p-2 relative">
+        <i data-lucide="activity" class="w-6 h-6 text-orange-500 mb-0.5"></i>
+        <span class="text-[9px] font-mono font-extrabold text-brand-ink uppercase">Meralco</span>
+        <span class="text-[8px] font-mono text-zinc-400">Smart Hub</span>
+      </div>
+    </div>
+  </div>
+  <div id="nodesContainer" class="w-full h-full relative z-10 pointer-events-none"></div>
+</main>
+<!-- LEFT DOCK -->
+<aside id="dockLeft" class="fixed top-24 left-4 bottom-4 w-72 glass-hud rounded-2xl p-4 flex flex-col justify-between z-30 transition-all duration-300">
+  <div class="space-y-3 flex-1 flex flex-col min-h-0">
+    <div class="flex items-center justify-between border-b border-zinc-800 pb-3 shrink-0">
+      <h2 class="font-bold text-brand-ink text-xs uppercase tracking-wider">Hardware Catalog</h2>
+      <button onclick="toggleModal(true)" class="text-[10px] px-2 py-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-lg">+ Custom</button>
+    </div>
+    <input type="text" id="catalogSearch" placeholder="Search appliances..." oninput="renderCatalog()" class="shrink-0 w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-orange-500/60">
+    <div id="categoryPills" class="flex gap-1 overflow-x-auto pb-1 text-[10px] shrink-0"></div>
+    <div id="catalogList" class="space-y-2 overflow-y-auto flex-1 pr-1"></div>
+  </div>
+  <div class="pt-3 border-t border-zinc-800 text-[11px] text-zinc-400 shrink-0">Drag tokens onto the grid or tap <strong>+</strong> to spawn.</div>
+</aside>
+<!-- RIGHT DOCK -->
+<aside id="dockRight" class="fixed top-24 right-4 bottom-4 w-80 glass-hud rounded-2xl p-4 flex flex-col gap-4 z-30 transition-all duration-300 overflow-y-auto">
+  <div class="bg-zinc-950/80 rounded-xl p-4 border border-zinc-800 space-y-3">
+    <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+      <span class="text-[10px] font-mono uppercase text-zinc-400 font-semibold">Projected Bill Telemetry</span>
+      <span id="effectiveRateBadge" class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">₱11.850 / kWh</span>
+    </div>
+    <div>
+      <div class="flex items-baseline gap-1.5"><span class="text-xs text-orange-400 font-mono font-bold">₱</span><span id="totalBillDisplay" class="text-3xl font-extrabold text-brand-ink font-mono">0.00</span></div>
+      <div class="flex justify-between mt-1 text-[11px] text-zinc-400 font-mono">
+        <span>Volume: <strong id="totalKwhDisplay" class="text-zinc-200">0.0 kWh</strong></span>
+        <span>Daily: <strong id="dailyCostDisplay" class="text-emerald-400">₱0.00 / day</strong></span>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800 text-[11px]">
+      <div class="bg-zinc-900/80 p-2 rounded-lg border border-zinc-800"><span class="text-[9px] text-zinc-500 block">Peak Load Draw</span><span id="totalWattsDisplay" class="font-bold text-brand-ink font-mono">0 W</span></div>
+      <div class="bg-zinc-900/80 p-2 rounded-lg border border-zinc-800"><span class="text-[9px] text-zinc-500 block">CDD Penalty</span><span id="cddValueDisplay" class="font-bold text-cyan-400 font-mono">1.00x (+0%)</span></div>
+    </div>
+    <div id="cddBanner" class="hidden bg-brand-cyanSoft/70 border border-sky-200/80 rounded-lg p-2 text-[10px] text-cyan-300">
+      <b class="text-cyan-400">CDD Thermal Warning:</b> ambient <strong id="cddTempDisplay" class="text-brand-ink">32°C</strong> raises compressor load by <strong id="cddPctDisplay" class="text-cyan-200">27%</strong>.
+    </div>
+  </div>
+  <div class="bg-zinc-950/80 rounded-xl p-3 border border-zinc-800 space-y-2">
+    <div class="flex justify-between text-xs"><span class="text-zinc-300 font-semibold">kWh Breakdown</span><span id="activeNodesCount" class="text-[10px] text-zinc-500 font-mono">0 Nodes</span></div>
+    <div class="h-32 relative"><canvas id="categoryChart"></canvas></div>
+  </div>
+  <div class="bg-zinc-950/80 rounded-xl p-3.5 border border-zinc-800 space-y-3 flex-1">
+    <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+      <h3 class="font-bold text-brand-ink text-xs">LP Bill Minimizer</h3>
+      <span class="text-[9px] font-mono font-bold bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded border border-orange-500/20">P3➔P2 Solver</span>
+    </div>
+    <div class="space-y-1.5 bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-800">
+      <div class="flex justify-between items-center text-xs">
+        <label for="targetBudgetInput" class="text-zinc-400">Target Budget:</label>
+        <span><span class="text-orange-400 font-bold font-mono">₱</span><input type="number" id="targetBudgetInput" value="3500" step="100" min="500" max="50000" oninput="syncBudgetSlider()" class="w-20 bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-xs text-orange-400 font-bold font-mono text-right focus:outline-none focus:border-orange-500"></span>
+      </div>
+      <input type="range" id="targetBudgetSlider" min="500" max="20000" step="100" value="3500" oninput="syncBudgetInput()" class="w-full cursor-pointer">
+      <div class="flex justify-between items-center text-[10px] font-mono"><span class="text-zinc-500">Budget Delta:</span><span id="budgetDeltaBadge" class="font-bold px-1.5 py-0.5 rounded text-[9px]">₱0.00</span></div>
+    </div>
+    <button id="btnSolve" onclick="runOptimization()" class="w-full bg-gradient-to-r from-brand-orange to-brand-orangeLight hover:opacity-90 shadow-md shadow-brand-orange/25 text-white font-bold py-2 rounded-lg text-xs">Optimize Schedule</button>
+    <div id="optimizationResults" class="text-[11px]"><div class="text-zinc-500 text-center italic p-3 bg-zinc-900/40 rounded-lg border border-zinc-800/40 text-[10px]">Click "Optimize Schedule" to compute optimal daily runtime reductions.</div></div>
+    <div class="text-[9px] text-zinc-600 leading-tight pt-1 border-t border-zinc-800">Data: U.S. EPA ENERGY STAR open data (data.energystar.gov). Pictures: Wikipedia / Wikimedia Commons APIs. Items without ENERGY STAR coverage show typical brands and catalog wattage.</div>
+  </div>
+</aside>
+<script>
+// ===================== 0. DATA LAYER =====================
+const API = {
+  wiki: t => `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t)}`,
+  wikiSearch: q => `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=6&prop=pageimages&piprop=thumbnail&pithumbsize=320&format=json&origin=*`,
+  commons: q => `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=8&prop=imageinfo&iiprop=url|mime&iiurlwidth=320&format=json&origin=*`,
+  soda: (id, limit = 1000) => `https://data.energystar.gov/resource/${id}.json?$limit=${limit}`,
+  discovery: q => `https://api.us.socrata.com/api/catalog/v1?domains=data.energystar.gov&search_context=data.energystar.gov&only=datasets&limit=5&q=${encodeURIComponent(q)}`
+};
+async function fetchJSON(url, timeoutMs = 12000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, headers: { 'Accept': 'application/json' } });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } finally { clearTimeout(timer); }
+}
+// Built-in picture tiles: every item always has a picture, even offline
+const EMOJI = { ac_inverter_15: '❄️', ac_window_10: '🌬️', ref_inverter_10: '🧊', gaming_pc: '🖥️', laptop_setup: '💻', stand_fan: '🌀', washing_machine: '🧺', rice_cooker: '🍚', induction_stove: '🍳', water_heater: '🚿', smart_tv_55: '📺', wifi_router: '📶', led_lights_home: '💡' };
+const CAT_EMOJI = { Cooling: '❄️', Kitchen: '🍽️', Office: '💻', Laundry: '🧺', Bath: '🚿', Entertainment: '📺', Lighting: '💡' };
+const TILE_COLORS = { Cooling: '#0ea5e9', Kitchen: '#10b981', Office: '#3b82f6', Laundry: '#6366f1', Bath: '#f97316', Entertainment: '#a855f7', Lighting: '#eab308' };
+const ART = {
+  ac_inverter_15: `<rect x="14" y="40" width="132" height="50" rx="12" fill="#f4f4f5"/><rect x="14" y="76" width="132" height="14" rx="7" fill="#d4d4d8"/><rect x="26" y="80" width="108" height="5" rx="2.5" fill="#71717a"/><circle cx="130" cy="54" r="3" fill="#22c55e"/><path d="M40 108q10 8 0 16M70 108q10 8 0 16M100 108q10 8 0 16M130 108q10 8 0 16" stroke="#7dd3fc" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+  ac_window_10: `<rect x="22" y="36" width="116" height="84" rx="8" fill="#f4f4f5"/><g stroke="#a1a1aa" stroke-width="4"><path d="M34 52h92M34 64h92M34 76h92M34 88h92"/></g><rect x="34" y="100" width="40" height="10" rx="3" fill="#d4d4d8"/><circle cx="112" cy="105" r="7" fill="#38bdf8"/>`,
+  ref_inverter_10: `<rect x="48" y="14" width="64" height="134" rx="8" fill="#e4e4e7"/><rect x="48" y="58" width="64" height="3" fill="#a1a1aa"/><rect x="99" y="30" width="4" height="22" rx="2" fill="#71717a"/><rect x="99" y="72" width="4" height="34" rx="2" fill="#71717a"/><rect x="48" y="146" width="64" height="4" fill="#52525b"/>`,
+  gaming_pc: `<rect x="52" y="14" width="56" height="132" rx="8" fill="#18181b" stroke="#52525b" stroke-width="3"/><rect x="60" y="24" width="40" height="30" rx="4" fill="#0f172a" stroke="#a855f7" stroke-width="2"/><circle cx="80" cy="96" r="20" fill="none" stroke="#22d3ee" stroke-width="4"/><circle cx="80" cy="96" r="6" fill="#22d3ee"/><circle cx="80" cy="132" r="5" fill="#ef4444"/>`,
+  laptop_setup: `<rect x="20" y="30" width="72" height="48" rx="4" fill="#18181b" stroke="#d4d4d8" stroke-width="3"/><rect x="28" y="38" width="56" height="32" fill="#38bdf8"/><rect x="100" y="42" width="44" height="36" rx="3" fill="#18181b" stroke="#d4d4d8" stroke-width="3"/><rect x="118" y="78" width="8" height="12" fill="#a1a1aa"/><path d="M28 98h104l8 18H20z" fill="#d4d4d8"/><rect x="48" y="104" width="56" height="5" rx="2" fill="#71717a"/>`,
+  stand_fan: `<circle cx="80" cy="54" r="34" fill="none" stroke="#e4e4e7" stroke-width="4"/><g fill="#93c5fd"><ellipse cx="80" cy="36" rx="8" ry="16"/><ellipse cx="80" cy="36" rx="8" ry="16" transform="rotate(120 80 54)"/><ellipse cx="80" cy="36" rx="8" ry="16" transform="rotate(240 80 54)"/></g><circle cx="80" cy="54" r="6" fill="#52525b"/><rect x="77" y="88" width="6" height="48" fill="#d4d4d8"/><ellipse cx="80" cy="140" rx="30" ry="8" fill="#a1a1aa"/>`,
+  washing_machine: `<rect x="34" y="16" width="92" height="132" rx="8" fill="#f4f4f5"/><rect x="34" y="16" width="92" height="22" rx="8" fill="#d4d4d8"/><circle cx="48" cy="27" r="4" fill="#6366f1"/><circle cx="80" cy="88" r="36" fill="#a1a1aa"/><circle cx="80" cy="88" r="28" fill="#38bdf8"/><path d="M58 88q11-10 22 0t22 0" stroke="#e0f2fe" stroke-width="4" fill="none"/>`,
+  rice_cooker: `<path d="M34 70q46-50 92 0z" fill="#f4f4f5"/><rect x="30" y="70" width="100" height="62" rx="14" fill="#e4e4e7"/><rect x="30" y="100" width="100" height="6" fill="#a1a1aa"/><circle cx="80" cy="86" r="5" fill="#ef4444"/><rect x="72" y="46" width="16" height="6" rx="3" fill="#71717a"/><rect x="40" y="132" width="80" height="8" rx="4" fill="#52525b"/>`,
+  induction_stove: `<rect x="18" y="52" width="124" height="64" rx="8" fill="#18181b" stroke="#71717a" stroke-width="3"/><circle cx="56" cy="84" r="20" fill="none" stroke="#f97316" stroke-width="4"/><circle cx="106" cy="84" r="14" fill="none" stroke="#f97316" stroke-width="4"/><rect x="60" y="120" width="40" height="6" rx="3" fill="#a1a1aa"/>`,
+  water_heater: `<rect x="40" y="14" width="80" height="96" rx="12" fill="#f4f4f5"/><rect x="52" y="26" width="30" height="14" rx="3" fill="#18181b"/><circle cx="102" cy="34" r="8" fill="#f97316"/><path d="M80 110v14M62 124h36l-6 10H68z" fill="#a1a1aa" stroke="#a1a1aa" stroke-width="3"/><path d="M68 142v10M80 142v14M92 142v10" stroke="#7dd3fc" stroke-width="4" stroke-linecap="round"/>`,
+  smart_tv_55: `<rect x="14" y="30" width="132" height="82" rx="6" fill="#18181b" stroke="#d4d4d8" stroke-width="3"/><rect x="20" y="36" width="120" height="70" fill="#7c3aed"/><path d="M20 106l40-40 30 28 20-16 30 28z" fill="#22d3ee" opacity=".7"/><rect x="72" y="112" width="16" height="14" fill="#a1a1aa"/><rect x="52" y="126" width="56" height="6" rx="3" fill="#a1a1aa"/>`,
+  wifi_router: `<rect x="24" y="92" width="112" height="36" rx="8" fill="#18181b" stroke="#d4d4d8" stroke-width="3"/><circle cx="44" cy="110" r="4" fill="#22c55e"/><circle cx="58" cy="110" r="4" fill="#22c55e"/><circle cx="72" cy="110" r="4" fill="#f59e0b"/><rect x="40" y="40" width="6" height="52" fill="#d4d4d8"/><rect x="114" y="40" width="6" height="52" fill="#d4d4d8"/><path d="M60 62q20-20 40 0M68 74q12-12 24 0" stroke="#38bdf8" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+  led_lights_home: `<circle cx="80" cy="64" r="36" fill="#fde047"/><path d="M64 94h32v14H64z" fill="#d4d4d8"/><rect x="66" y="108" width="28" height="8" rx="3" fill="#a1a1aa"/><rect x="70" y="116" width="20" height="8" rx="3" fill="#71717a"/><path d="M80 8v10M24 64h10M126 64h10M40 24l8 8M120 24l-8 8" stroke="#fde047" stroke-width="4" stroke-linecap="round"/>`
+};
+const ART_DEFAULT = `<rect x="50" y="56" width="60" height="50" rx="10" fill="#e4e4e7"/><rect x="62" y="30" width="8" height="28" fill="#a1a1aa"/><rect x="90" y="30" width="8" height="28" fill="#a1a1aa"/><path d="M80 106v22q0 14 14 14" stroke="#a1a1aa" stroke-width="6" fill="none"/>`;
+function emojiTile(item) {
+  const color = TILE_COLORS[item.category] || '#ff6a00';
+  const body = ART[item.id] || ART_DEFAULT;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".85"/><stop offset="1" stop-color="#18181c"/></linearGradient></defs><rect width="160" height="160" rx="18" fill="url(#g)"/>${body}</svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+function initialInfo(item) {
+  const names = (item.fallbackBrands && item.fallbackBrands.length) ? item.fallbackBrands : (item.brand ? [item.brand] : ['Generic']);
+  const brands = names.map(b => ({ brand: b, model: '', watts: null, kwhYr: null, count: 0 }));
+  return { enriching: true, image: emojiTile(item), brands, selected: brands[0] || null, selectedIdx: 0, source: 'fallback' };
+}
+// Real photo chain: page titles -> Wikipedia search -> Commons search -> emoji tile
+const photoCache = new Map();
+function probeImage(url) {
+  return new Promise(res => { const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = url; });
+}
+async function firstLoadable(urls) {
+  for (const u of urls) if (u && await probeImage(u)) return u;
+  return null;
+}
+async function searchWikipediaImage(q) {
+  try {
+    const j = await fetchJSON(API.wikiSearch(q), 8000);
+    const pages = Object.values((j.query && j.query.pages) || {}).sort((a, b) => a.index - b.index);
+    return await firstLoadable(pages.map(p => p.thumbnail && p.thumbnail.source));
+  } catch (e) { return null; }
+}
+async function searchCommonsImage(q) {
+  try {
+    const j = await fetchJSON(API.commons(q), 8000);
+    const pages = Object.values((j.query && j.query.pages) || {}).sort((a, b) => a.index - b.index);
+    const urls = pages.map(p => p.imageinfo && p.imageinfo[0])
+      .filter(i => i && /^image\/(jpeg|png|webp)$/.test(i.mime))
+      .map(i => i.thumburl || i.url);
+    return await firstLoadable(urls);
+  } catch (e) { return null; }
+}
+function getImageForItem(item) {
+  if (photoCache.has(item.id)) return photoCache.get(item.id);
+  const p = (async () => {
+    if (item.photo && await probeImage(item.photo)) return item.photo;
+    for (const title of (item.wiki || [])) {
+      try {
+        const j = await fetchJSON(API.wiki(title));
+        const src = (j.thumbnail && j.thumbnail.source) || (j.originalimage && j.originalimage.source);
+        if (src && await probeImage(src)) return src;
+      } catch (e) { /* next title */ }
+    }
+    const q = item.imageQuery || item.name.replace(/.*?|[\d.]+\s?(HP|cu\.ft)|["+]|\bx\d+\b/gi, '').replace(/\s+/g, ' ').trim();
+    const found = (await searchWikipediaImage(q)) || (await searchCommonsImage(q + ' appliance'));
+    if (found) return found;
+    // last resort: keyword photo service (plain <img>, no CORS needed)
+    const kw = encodeURIComponent((item.photoKeyword || q).toLowerCase().replace(/\s+/g, ','));
+    const flickr = `https://loremflickr.com/320/240/${kw}?lock=${item.id.length * 7}`;
+    return (await probeImage(flickr)) ? flickr : null;
+  })();
+  photoCache.set(item.id, p);
+  return p;
+}
+// Real brands / models / watts from ENERGY STAR
+const datasetCache = new Map();
+async function resolveDatasetId(item) {
+  if (item.dataset) return item.dataset;
+  if (!item.datasetQuery) return null;
+  try {
+    const j = await fetchJSON(API.discovery(item.datasetQuery));
+    const hit = (j.results || []).find(r => r.resource && /certified/i.test(r.resource.name || ''));
+    return hit ? hit.resource.id : null;
+  } catch (e) { return null; }
+}
+function getDatasetRows(item) {
+  const key = item.dataset || item.datasetQuery;
+  if (!key) return Promise.resolve([]);
+  if (datasetCache.has(key)) return datasetCache.get(key);
+  const p = (async () => {
+    const id = await resolveDatasetId(item);
+    if (!id) return [];
+    try { const rows = await fetchJSON(API.soda(id), 25000); return Array.isArray(rows) ? rows : []; }
+    catch (e) { return []; }
+  })();
+  datasetCache.set(key, p);
+  return p;
+}
+function findKey(row, patterns) {
+  const keys = Object.keys(row);
+  for (const rx of patterns) { const k = keys.find(k => rx.test(k)); if (k) return k; }
+  return null;
+}
+const num = v => { const n = parseFloat(String(v).replace(/,/g, '')); return Number.isFinite(n) ? n : null; };
+function buildBrandIndex(rows, mode) {
+  if (!rows.length) return [];
+  const s = rows[0];
+  const kBrand = findKey(s, [/^brand_name$/, /brand/]);
+  const kModel = findKey(s, [/^model_number$/, /model_number/, /model_name/, /^model/]);
+  const kAnnual = findKey(s, [/annual_energy_use/, /annual.*kwh/, /kwh.*(yr|year)/]);
+  const kBtu = findKey(s, [/cooling_capacity/, /btu/]);
+  const kCeer = findKey(s, [/^combined_energy_efficiency_ratio/, /ceer/]);
+  const kOn = findKey(s, [/on_?mode.*(power|watt)/, /(power|watt).*on_?mode/]);
+  if (!kBrand) return [];
+  const byBrand = new Map();
+  rows.forEach(r => {
+    const brand = String(r[kBrand] || '').trim();
+    if (!brand) return;
+    const kwhYr = kAnnual ? num(r[kAnnual]) : null;
+    const btu = kBtu ? num(r[kBtu]) : null;
+    const ceer = kCeer ? num(r[kCeer]) : null;
+    let watts = null;
+    if (mode === 'btuCeer' && btu && ceer) watts = btu / ceer;
+    else if (mode === 'avgFromAnnual' && kwhYr) watts = (kwhYr * 1000) / 8760;
+    else if (mode === 'onPower' && kOn) watts = num(r[kOn]);
+    if (!byBrand.has(brand)) byBrand.set(brand, []);
+    byBrand.get(brand).push({ model: kModel ? String(r[kModel] || '').trim() : '', kwhYr, watts });
+  });
+  const out = [];
+  byBrand.forEach((list, brand) => {
+    const usable = list.filter(e => e.watts || e.kwhYr);
+    if (!usable.length) return;
+    const sorted = [...usable].sort((a, b) => (a.watts || a.kwhYr) - (b.watts || b.kwhYr));
+    out.push({ brand, count: list.length, ...sorted[Math.floor(sorted.length / 2)] });
+  });
+  out.sort((a, b) => b.count - a.count);
+  return out.slice(0, 8);
+}
+// ===================== 1. CATALOG =====================
+const HARDWARE_CATALOG = [
+  { id: 'ac_inverter_15', name: '1.5 HP Inverter Aircon', category: 'Cooling', watts: 1100, defaultHours: 8, priority: 3, isAC: true, icon: 'snowflake', wiki: ['Mini-split', 'Air_conditioning'], dataset: '5xn2-dv4h', wattMode: 'btuCeer', fallbackBrands: ['Daikin', 'Carrier', 'Panasonic'] },
+  { id: 'ac_window_10', name: '1.0 HP Window Aircon (Std)', category: 'Cooling', watts: 950, defaultHours: 8, priority: 3, isAC: true, icon: 'wind', wiki: ['Room_air_conditioner', 'Window_air_conditioner', 'Air_conditioning'], dataset: '5xn2-dv4h', wattMode: 'btuCeer', fallbackBrands: ['Kolin', 'Condura', 'LG'] },
+  { id: 'ref_inverter_10', name: 'Inverter Refrigerator (10 cu.ft)', category: 'Kitchen', watts: 120, defaultHours: 24, priority: 1, isAC: false, icon: 'refrigerator', photo: 'https://commons.wikimedia.org/wiki/Special:FilePath/A_Samsung_Refrigerator.jpg?width=320', wiki: ['Refrigerator'], dataset: 'p5st-her9', wattMode: 'avgFromAnnual', fallbackBrands: ['Samsung', 'LG', 'Panasonic'] },
+  { id: 'gaming_pc', name: 'Gaming Workstation PC', category: 'Office', watts: 400, defaultHours: 7, priority: 2, isAC: false, icon: 'monitor', wiki: ['Gaming_computer', 'Desktop_computer'], fallbackBrands: ['ASUS ROG', 'MSI', 'Alienware'] },
+  { id: 'laptop_setup', name: 'Work Laptop + Dual Monitors', category: 'Office', watts: 95, defaultHours: 9, priority: 1, isAC: false, icon: 'laptop', wiki: ['Laptop'], fallbackBrands: ['Lenovo', 'Dell', 'HP'] },
+  { id: 'stand_fan', name: 'Electric Stand Fan (16")', category: 'Cooling', watts: 65, defaultHours: 14, priority: 2, isAC: false, icon: 'fan', wiki: ['Mechanical_fan', 'Fan_(machine)'], fallbackBrands: ['Asahi', 'Kyowa', 'Hanabishi'] },
+  { id: 'washing_machine', name: 'Inverter Washing Machine', category: 'Laundry', watts: 450, defaultHours: 1, priority: 2, isAC: false, icon: 'shirt', wiki: ['Washing_machine'], dataset: 'bghd-e2wd', wattMode: 'none', fallbackBrands: ['Samsung', 'LG', 'Whirlpool'] },
+  { id: 'rice_cooker', name: 'Digital Rice Cooker', category: 'Kitchen', watts: 750, defaultHours: 1, priority: 1, isAC: false, icon: 'cooking-pot', wiki: ['Rice_cooker'], fallbackBrands: ['Zojirushi', 'Tiger', 'Panasonic'] },
+  { id: 'induction_stove', name: 'Induction Cooktop', category: 'Kitchen', watts: 1800, defaultHours: 1, priority: 2, isAC: false, icon: 'flame', wiki: ['Induction_cooking'], fallbackBrands: ['Midea', 'Bosch', 'Electrolux'] },
+  { id: 'water_heater', name: 'Shower Water Heater', category: 'Bath', watts: 3200, defaultHours: 0.6, priority: 3, isAC: false, icon: 'shower-head', wiki: ['Tankless_water_heating', 'Water_heating'], fallbackBrands: ['Panasonic', 'Ariston', 'Stiebel Eltron'] },
+  { id: 'smart_tv_55', name: '55" 4K Smart OLED TV', category: 'Entertainment', watts: 140, defaultHours: 5, priority: 3, isAC: false, icon: 'tv', wiki: ['Television', 'OLED'], datasetQuery: 'ENERGY STAR Certified Televisions', wattMode: 'onPower', fallbackBrands: ['Samsung', 'LG', 'Sony'] },
+  { id: 'wifi_router', name: 'Wi-Fi 6 Router Node', category: 'Office', watts: 24, defaultHours: 24, priority: 1, isAC: false, icon: 'wifi', wiki: ['Wireless_router', 'Router_(computing)'], fallbackBrands: ['TP-Link', 'ASUS', 'Netgear'] },
+  { id: 'led_lights_home', name: 'Whole-Home LED Lights (x8)', category: 'Lighting', watts: 72, defaultHours: 7, priority: 2, isAC: false, icon: 'lightbulb', wiki: ['LED_lamp'], fallbackBrands: ['Philips', 'Omni', 'Firefly'] }
+];
+const PRESETS = {
+  wfh: [
+    { catalogId: 'laptop_setup', hours: 9, qty: 1, relX: -300, relY: -110 },
+    { catalogId: 'wifi_router', hours: 24, qty: 1, relX: -300, relY: 120 },
+    { catalogId: 'ref_inverter_10', hours: 24, qty: 1, relX: 260, relY: -130 },
+    { catalogId: 'ac_inverter_15', hours: 10, qty: 1, relX: -60, relY: -230 },
+    { catalogId: 'stand_fan', hours: 12, qty: 1, relX: -60, relY: 130 },
+    { catalogId: 'led_lights_home', hours: 6, qty: 1, relX: 260, relY: 100 }
+  ],
+  summer: [
+    { catalogId: 'ac_inverter_15', hours: 14, qty: 1, relX: -330, relY: -150 },
+    { catalogId: 'ac_window_10', hours: 10, qty: 1, relX: 280, relY: -150 },
+    { catalogId: 'stand_fan', hours: 18, qty: 2, relX: -330, relY: 90 },
+    { catalogId: 'ref_inverter_10', hours: 24, qty: 1, relX: 280, relY: 90 },
+    { catalogId: 'water_heater', hours: 0.8, qty: 1, relX: -30, relY: -230 }
+  ],
+  eco: [
+    { catalogId: 'ref_inverter_10', hours: 24, qty: 1, relX: -320, relY: -40 },
+    { catalogId: 'stand_fan', hours: 10, qty: 2, relX: 260, relY: -40 },
+    { catalogId: 'laptop_setup', hours: 8, qty: 1, relX: -30, relY: -230 },
+    { catalogId: 'wifi_router', hours: 24, qty: 1, relX: -30, relY: 130 }
+  ]
+};
+// ===================== 2. STATE =====================
+let activeNodes = [], instanceCounter = 1, selectedCategory = 'All', categoryChart = null;
+let meterHubPos = { x: innerWidth / 2, y: innerHeight / 2 };
+let draggedNodeId = null, dragOffset = { x: 0, y: 0 };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const icons = () => { try { lucide.createIcons(); } catch (e) {} };
+// ===================== 3. INIT =====================
+function init() {
+  setupMeterHubPosition();
+  renderCategoryPills();
+  renderCatalog();
+  setupSpatialDropZone();
+  initChart();
+  loadPreset('wfh');
+  fetchJSON(API.wiki('Refrigerator'), 7000).catch(() => showToast('Internet is blocked in this view. Download the file and open it in your browser to see real photos.', 'info'));
+  addEventListener('resize', () => { setupMeterHubPosition(); renderConnectorLines(); });
+  icons();
+}
+function setupMeterHubPosition() {
+  const hub = document.getElementById('meterHub');
+  meterHubPos.x = innerWidth / 2;
+  meterHubPos.y = innerHeight / 2 - 20;
+  hub.style.left = meterHubPos.x + 'px';
+  hub.style.top = meterHubPos.y + 'px';
+}
+// ===================== 4. CATALOG UI =====================
+function renderCategoryPills() {
+  const cats = ['All', 'Cooling', 'Kitchen', 'Office', 'Laundry', 'Bath', 'Entertainment', 'Lighting', 'Custom'];
+  const c = document.getElementById('categoryPills');
+  c.innerHTML = '';
+  cats.forEach(cat => {
+    const b = document.createElement('button');
+    b.className = `px-2 py-0.5 rounded-md font-medium whitespace-nowrap ${selectedCategory === cat ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40' : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'}`;
+    b.innerText = cat;
+    b.onclick = () => { selectedCategory = cat; renderCategoryPills(); renderCatalog(); };
+    c.appendChild(b);
+  });
+}
+function renderCatalog() {
+  const list = document.getElementById('catalogList');
+  list.innerHTML = '';
+  const q = document.getElementById('catalogSearch').value.toLowerCase();
+  HARDWARE_CATALOG.forEach(item => {
+    if (selectedCategory !== 'All' && item.category !== selectedCategory) return;
+    if (q && !item.name.toLowerCase().includes(q) && !item.category.toLowerCase().includes(q)) return;
+    const card = document.createElement('div');
+    card.className = 'drag-item-token bg-zinc-950/80 border border-zinc-800 hover:border-orange-500/40 rounded-xl p-2 flex items-center justify-between select-none';
+    card.draggable = true;
+    card.innerHTML = `
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="w-10 h-10 shrink-0 rounded-lg border border-zinc-800 bg-zinc-900 overflow-hidden"><img data-thumb alt="" draggable="false" class="w-full h-full object-cover" src="${emojiTile(item)}"></div>
+        <div class="min-w-0">
+          <h4 class="font-semibold text-xs text-zinc-200 truncate">${esc(item.name)}</h4>
+          <p class="text-[9px] text-zinc-500 font-mono truncate">${item.watts}W • ${esc(item.category)}${item.fallbackBrands && item.fallbackBrands[0] ? ' • ' + esc(item.fallbackBrands[0]) : ''}</p>
+        </div>
+      </div>
+      <button data-spawn class="w-6 h-6 shrink-0 bg-zinc-900 hover:bg-orange-600 text-zinc-300 hover:text-white border border-zinc-800 rounded-md font-bold text-xs">+</button>`;
+    card.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', item.id));
+    card.querySelector('[data-spawn]').onclick = () => spawnNodeAtCenter(item.id);
+    list.appendChild(card);
+    getImageForItem(item).then(url => {
+      const img = card.querySelector('img[data-thumb]');
+      if (url && img && card.isConnected) img.src = url;
+    });
+  });
+}
+// ===================== 5. CANVAS / DROP =====================
+function setupSpatialDropZone() {
+  const c = document.getElementById('spatialCanvas');
+  c.addEventListener('dragover', e => { e.preventDefault(); c.classList.add('spatial-drop-active'); });
+  c.addEventListener('dragleave', () => c.classList.remove('spatial-drop-active'));
+  c.addEventListener('drop', e => {
+    e.preventDefault();
+    c.classList.remove('spatial-drop-active');
+    const id = e.dataTransfer.getData('text/plain');
+    if (id) spawnNodeAtPosition(id, e.clientX - 140, e.clientY - 60);
+  });
+}
+function spawnNodeAtCenter(id) {
+  const off = (activeNodes.length % 6) * 20;
+  spawnNodeAtPosition(id, meterHubPos.x - 140 + off, meterHubPos.y - 100 + off);
+}
+function addNode(template, overrides) {
+  const node = { instanceId: instanceCounter++, ...template, hours: template.defaultHours, qty: 1, catalogWatts: template.watts, info: initialInfo(template), ...overrides };
+  activeNodes.push(node);
+  enrichNode(node);
+  return node;
+}
+function spawnNodeAtPosition(id, x, y) {
+  const t = HARDWARE_CATALOG.find(i => i.id === id);
+  if (!t) return;
+  addNode(t, { x: Math.max(20, Math.min(innerWidth - 300, x)), y: Math.max(96, Math.min(innerHeight - 280, y)) });
+  renderNodeCards();
+  recalculate();
+  showToast(`Spawned ${t.name}, fetching live data…`);
+}
+function removeNode(id) {
+  const t = activeNodes.find(n => n.instanceId === id);
+  activeNodes = activeNodes.filter(n => n.instanceId !== id);
+  renderNodeCards();
+  recalculate();
+  if (t) showToast(`Removed ${t.name}`, 'info');
+}
+function clearCanvasNodes() { activeNodes = []; renderNodeCards(); recalculate(); showToast('Canvas cleared'); }
+function loadPreset(key) {
+  const preset = PRESETS[key];
+  if (!preset) return;
+  activeNodes = [];
+  preset.forEach(p => {
+    const t = HARDWARE_CATALOG.find(i => i.id === p.catalogId);
+    if (t) addNode(t, { hours: p.hours, qty: p.qty, x: meterHubPos.x + p.relX, y: meterHubPos.y + p.relY });
+  });
+  renderNodeCards();
+  recalculate();
+  showToast(`Loaded ${key.toUpperCase()} preset`);
+}
+// ===================== 5b. ENRICHMENT =====================
+async function enrichNode(node) {
+  const item = HARDWARE_CATALOG.find(i => i.id === node.id);
+  if (!item) { node.info.enriching = false; return; }
+  const [photo, rows] = await Promise.all([
+    getImageForItem(item).catch(() => null),
+    (item.dataset || item.datasetQuery) ? getDatasetRows(item).catch(() => []) : Promise.resolve([])
+  ]);
+  if (!activeNodes.includes(node)) return;
+  if (photo) node.info.image = photo;
+  const brands = buildBrandIndex(rows, item.wattMode);
+  if (brands.length) { node.info.brands = brands; node.info.source = 'energystar'; applyBrand(node, 0, false); }
+  else if (!photo && (item.dataset || item.datasetQuery)) node.info.source = 'offline';
+  node.info.enriching = false;
+  if (!draggedNodeId && document.getElementById('node-' + node.instanceId)) { renderNodeCards(); recalculate(); }
+}
+function applyBrand(node, idx, rerender = true) {
+  const sel = node.info.brands[idx] || null;
+  node.info.selected = sel;
+  node.info.selectedIdx = idx;
+  node.watts = (sel && sel.watts && sel.watts >= 5) ? Math.round(sel.watts) : node.catalogWatts;
+  if (rerender) { renderNodeCards(); recalculate(); }
+}
+function selectBrand(id, idx) {
+  const n = activeNodes.find(n => n.instanceId === id);
+  if (n) applyBrand(n, parseInt(idx, 10), true);
+}
+// ===================== 6. NODE CARDS & CONNECTORS =====================
+function renderNodeCards() {
+  const container = document.getElementById('nodesContainer');
+  container.innerHTML = '';
+  const rate = parseFloat(document.getElementById('inputRate').value) || 11.85;
+  const days = parseInt(document.getElementById('inputDays').value) || 30;
+  const cdd = getCddMultiplier();
+  activeNodes.forEach(node => {
+    const effW = node.watts * (node.isAC ? cdd : 1);
+    const kwh = (effW * node.hours * days * node.qty) / 1000;
+    const cost = kwh * rate;
+    const info = node.info;
+    const sel = info.selected;
+    const badge = node.priority === 1
+      ? '<span class="px-1.5 py-0.5 text-[8px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700 rounded">P1 Base</span>'
+      : node.priority === 2
+      ? '<span class="px-1.5 py-0.5 text-[8px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">P2 Mid</span>'
+      : '<span class="px-1.5 py-0.5 text-[8px] font-mono bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded">P3 High</span>';
+    const brandOptions = info.brands.map((b, i) => `<option value="${i}" ${i === info.selectedIdx ? 'selected' : ''}>${esc(b.brand)}${b.count ? ` (${b.count} models)` : ''}</option>`).join('');
+    const brandSelect = info.brands.length
+      ? `<select onchange="selectBrand(${node.instanceId}, this.value)" class="w-full bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[11px] text-zinc-100 font-semibold focus:outline-none focus:border-orange-500">${brandOptions}</select>`
+      : `<div class="text-[11px] text-zinc-300 font-semibold">${esc(node.brand || 'Custom / unbranded')}</div>`;
+    const src = info.enriching
+      ? '<span class="px-1.5 py-0.5 text-[8px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded">Fetching live photo + brands…</span>'
+      : info.source === 'energystar'
+      ? '<span class="px-1.5 py-0.5 text-[8px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">ENERGY STAR API</span>'
+      : info.source === 'offline'
+      ? '<span class="px-1.5 py-0.5 text-[8px] font-mono bg-red-500/10 text-red-400 border border-red-500/20 rounded">Typical brands (live data unreachable)</span>'
+      : '<span class="px-1.5 py-0.5 text-[8px] font-mono bg-zinc-800 text-zinc-400 border border-zinc-700 rounded">Typical brands • catalog W</span>';
+    const annual = sel && sel.kwhYr ? `${sel.kwhYr.toLocaleString(undefined, { maximumFractionDigits: 1 })} kWh/yr` : '—';
+    const card = document.createElement('div');
+    card.className = 'node-card pointer-events-auto';
+    card.id = 'node-' + node.instanceId;
+    card.style.left = node.x + 'px';
+    card.style.top = node.y + 'px';
+    card.innerHTML = `
+      <div class="p-2.5 border-b border-zinc-800 flex items-center justify-between cursor-move bg-brand-tint/60 rounded-t-xl" data-handle>
+        <div class="flex items-center gap-2 min-w-0">
+          <img src="${esc(info.image)}" alt="" draggable="false" class="w-7 h-7 rounded border border-zinc-800 object-cover shrink-0">
+          <div class="min-w-0"><h4 class="font-bold text-xs text-brand-ink leading-none truncate">${esc(node.name)}</h4><div class="mt-0.5">${badge}</div></div>
+        </div>
+        <button onclick="removeNode(${node.instanceId})" class="text-zinc-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+      </div>
+      <div class="p-2.5 space-y-2 text-[11px]">
+        <div class="flex gap-2.5">
+          <div class="w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800"><img src="${esc(info.image)}" alt="${esc(node.name)}" draggable="false" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='${emojiTile(node).replace(/'/g, '%27')}'"></div>
+          <div class="flex-1 min-w-0 space-y-1">
+            <div class="text-[9px] uppercase tracking-wider text-zinc-500 font-mono">Brand</div>
+            ${brandSelect}
+            <div class="text-[9px] text-zinc-500 font-mono truncate" title="${esc(sel && sel.model)}">${sel && sel.model ? 'Model: ' + esc(sel.model) : 'Model: n/a'}</div>
+          </div>
+        </div>
+        <div class="flex justify-end">${src}</div>
+        <div class="grid grid-cols-3 gap-1.5 font-mono">
+          <div class="bg-zinc-950 border border-zinc-800 rounded-lg p-1.5"><div class="text-[8px] text-zinc-500 uppercase">Wattage</div><div class="text-[12px] font-bold text-brand-ink">${Math.round(effW).toLocaleString()} W</div></div>
+          <div class="bg-zinc-950 border border-zinc-800 rounded-lg p-1.5"><div class="text-[8px] text-zinc-500 uppercase">Consumption</div><div class="text-[12px] font-bold text-orange-400">${kwh.toFixed(1)} kWh/mo</div></div>
+          <div class="bg-zinc-950 border border-zinc-800 rounded-lg p-1.5"><div class="text-[8px] text-zinc-500 uppercase">Cost</div><div class="text-[12px] font-bold text-emerald-400">₱${cost.toFixed(0)}</div></div>
+        </div>
+        <div class="flex justify-between text-[9px] font-mono text-zinc-500"><span>Rated annual: <span class="text-zinc-300">${annual}</span></span><span>${node.qty}u × ${node.hours} h/day</span></div>
+        <div class="space-y-1.5 pt-1 border-t border-zinc-800">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded px-1">
+              <button onclick="updateNodeQty(${node.instanceId}, -1)" class="px-1.5 py-0.5 text-zinc-400 hover:text-brand-ink font-bold">-</button>
+              <span class="px-1.5 font-mono text-brand-ink text-xs font-bold">${node.qty}</span>
+              <button onclick="updateNodeQty(${node.instanceId}, 1)" class="px-1.5 py-0.5 text-zinc-400 hover:text-brand-ink font-bold">+</button>
+            </div>
+            <span id="node-hrs-val-${node.instanceId}" class="font-mono text-orange-400 font-bold">${node.hours} h/day</span>
+          </div>
+          <input type="range" min="0.5" max="24" step="0.5" value="${node.hours}" oninput="updateNodeHours(${node.instanceId}, this.value)" class="w-full cursor-pointer">
+        </div>
+      </div>`;
+    card.querySelector('[data-handle]').addEventListener('mousedown', e => startDragNode(e, node.instanceId));
+    container.appendChild(card);
+  });
+  icons();
+  renderConnectorLines();
+}
+function renderConnectorLines() {
+  const svg = document.getElementById('svgConnectorLayer');
+  svg.innerHTML = '';
+  activeNodes.forEach(node => {
+    const el = document.getElementById('node-' + node.instanceId);
+    const cx = node.x + (el ? el.offsetWidth : 280) / 2;
+    const cy = node.y + (el ? el.offsetHeight : 200) / 2;
+    const dx = cx - meterHubPos.x;
+    const d = `M ${meterHubPos.x} ${meterHubPos.y} C ${meterHubPos.x + dx * 0.5} ${meterHubPos.y}, ${meterHubPos.x + dx * 0.5} ${cy}, ${cx} ${cy}`;
+    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    bg.setAttribute('d', d); bg.setAttribute('class', 'power-line-bg');
+    const flow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    flow.setAttribute('d', d); flow.setAttribute('class', node.watts >= 1000 ? 'power-line-high' : 'power-line-flow');
+    svg.appendChild(bg); svg.appendChild(flow);
+  });
+}
+// ===================== 7. DRAGGING =====================
+function startDragNode(e, id) {
+  if (e.target.closest('button')) return;
+  const node = activeNodes.find(n => n.instanceId === id);
+  if (!node) return;
+  draggedNodeId = id;
+  dragOffset.x = e.clientX - node.x;
+  dragOffset.y = e.clientY - node.y;
+  const el = document.getElementById('node-' + id);
+  if (el) el.classList.add('dragging');
+  document.addEventListener('mousemove', onDragNode);
+  document.addEventListener('mouseup', stopDragNode);
+}
+function onDragNode(e) {
+  const node = activeNodes.find(n => n.instanceId === draggedNodeId);
+  if (!node) return;
+  node.x = Math.max(10, Math.min(innerWidth - 290, e.clientX - dragOffset.x));
+  node.y = Math.max(90, Math.min(innerHeight - 120, e.clientY - dragOffset.y));
+  const el = document.getElementById('node-' + draggedNodeId);
+  if (el) { el.style.left = node.x + 'px'; el.style.top = node.y + 'px'; }
+  renderConnectorLines();
+}
+function stopDragNode() {
+  const el = document.getElementById('node-' + draggedNodeId);
+  if (el) el.classList.remove('dragging');
+  draggedNodeId = null;
+  document.removeEventListener('mousemove', onDragNode);
+  document.removeEventListener('mouseup', stopDragNode);
+}
+function updateNodeHours(id, val) {
+  const t = activeNodes.find(n => n.instanceId === id);
+  if (!t) return;
+  t.hours = parseFloat(val);
+  const label = document.getElementById('node-hrs-val-' + id);
+  if (label) label.innerText = t.hours + ' h/day';
+  recalculate();
+}
+function updateNodeQty(id, delta) {
+  const t = activeNodes.find(n => n.instanceId === id);
+  if (t) { t.qty = Math.max(1, t.qty + delta); renderNodeCards(); recalculate(); }
+}
+// ===================== 8. METRICS =====================
+function getCddMultiplier() {
+  const temp = parseFloat(document.getElementById('inputTemp').value) || 32;
+  return 1 + Math.max(0, temp - 26) * 0.045;
+}
+function recalculate() {
+  const rate = parseFloat(document.getElementById('inputRate').value) || 11.85;
+  const days = parseInt(document.getElementById('inputDays').value) || 30;
+  const temp = parseFloat(document.getElementById('inputTemp').value) || 32;
+  const cdd = getCddMultiplier();
+  let totalW = 0, totalKwh = 0, hasAC = false;
+  const catKwh = {};
+  activeNodes.forEach(n => {
+    if (n.isAC) hasAC = true;
+    const w = n.watts * (n.isAC ? cdd : 1);
+    const kwh = (w * n.hours * days * n.qty) / 1000;
+    totalW += w * n.qty;
+    totalKwh += kwh;
+    catKwh[n.category] = (catKwh[n.category] || 0) + kwh;
+  });
+  const bill = totalKwh * rate;
+  const $ = id => document.getElementById(id);
+  $('effectiveRateBadge').innerText = `₱${rate.toFixed(3)} / kWh`;
+  $('totalBillDisplay').innerText = bill.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  $('totalKwhDisplay').innerText = `${totalKwh.toFixed(1)} kWh`;
+  $('dailyCostDisplay').innerText = `₱${(bill / days).toFixed(2)} / day`;
+  $('totalWattsDisplay').innerText = `${Math.round(totalW).toLocaleString()} W`;
+  $('activeNodesCount').innerText = `${activeNodes.length} Node${activeNodes.length === 1 ? '' : 's'}`;
+  const pct = Math.round((cdd - 1) * 100);
+  $('cddValueDisplay').innerText = `${cdd.toFixed(2)}x (+${pct}%)`;
+  if (hasAC && temp > 26) { $('cddTempDisplay').innerText = temp + '°C'; $('cddPctDisplay').innerText = pct + '%'; $('cddBanner').classList.remove('hidden'); }
+  else $('cddBanner').classList.add('hidden');
+  syncBudgetDelta(bill);
+  updateChart(catKwh);
+}
+// ===================== 9. CHART =====================
+const CHART_COLORS = ['#ff6a00', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#f59e0b', '#84cc16'];
+function initChart() {
+  categoryChart = new Chart(document.getElementById('categoryChart').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels: [], datasets: [{ data: [], backgroundColor: CHART_COLORS, borderWidth: 0, hoverOffset: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: {
+        legend: { position: 'right', labels: { color: '#6c625b', font: { family: 'Inter', size: 9 }, boxWidth: 8, padding: 6 } },
+        tooltip: { backgroundColor: '#1f1a17', callbacks: { label: c => ` ${c.label}: ${c.parsed.toFixed(1)} kWh` } }
+      }
+    }
+  });
+}
+function updateChart(catKwh) {
+  if (!categoryChart) return;
+  const labels = Object.keys(catKwh), data = Object.values(catKwh);
+  categoryChart.data.labels = labels.length ? labels : ['No Load'];
+  categoryChart.data.datasets[0].data = data.length ? data : [1];
+  categoryChart.data.datasets[0].backgroundColor = data.length ? CHART_COLORS : ['#f0e4da'];
+  categoryChart.update();
+}
+// ===================== 10. BILL MINIMIZER =====================
+function syncBudgetSlider() { document.getElementById('targetBudgetSlider').value = document.getElementById('targetBudgetInput').value; recalculate(); }
+function syncBudgetInput() { document.getElementById('targetBudgetInput').value = document.getElementById('targetBudgetSlider').value; recalculate(); }
+function syncBudgetDelta(bill) {
+  const target = parseFloat(document.getElementById('targetBudgetInput').value) || 3500;
+  const delta = bill - target;
+  const b = document.getElementById('budgetDeltaBadge');
+  if (delta > 0) { b.innerText = `+₱${delta.toFixed(2)} Over`; b.className = 'font-bold px-1.5 py-0.5 rounded text-[9px] bg-red-500/10 text-red-400 border border-red-500/20'; }
+  else { b.innerText = `-₱${Math.abs(delta).toFixed(2)} Under`; b.className = 'font-bold px-1.5 py-0.5 rounded text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'; }
+}
+function runOptimization() {
+  if (!activeNodes.length) { showToast('Please add or spawn nodes first', 'error'); return; }
+  const btn = document.getElementById('btnSolve');
+  btn.innerText = 'Solving LP...';
+  setTimeout(() => { btn.innerText = 'Optimize Schedule'; executeSolver(document.getElementById('optimizationResults')); }, 250);
+}
+function executeSolver(box) {
+  const rate = parseFloat(document.getElementById('inputRate').value) || 11.85;
+  const days = parseInt(document.getElementById('inputDays').value) || 30;
+  const target = parseFloat(document.getElementById('targetBudgetInput').value) || 3500;
+  const cdd = getCddMultiplier();
+  const sim = activeNodes.map(n => {
+    const effW = n.watts * (n.isAC ? cdd : 1);
+    const perHr = (effW * days * n.qty / 1000) * rate;
+    const minHours = n.priority === 1 ? n.hours : (n.priority === 2 ? Math.min(n.hours, 2) : Math.min(n.hours, 1));
+    return { ...n, perHr, proposedHours: n.hours, minHours };
+  });
+  let bill = sim.reduce((s, n) => s + n.proposedHours * n.perHr, 0);
+  if (bill <= target) {
+    box.innerHTML = `<div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2.5 text-emerald-300 text-[10px]"><div class="font-bold text-emerald-400">Within Budget Target</div><p class="text-emerald-300/80">Current load (<strong>₱${bill.toFixed(2)}</strong>) is below your ceiling of <strong>₱${target.toFixed(2)}</strong>.</p></div>`;
+    return;
+  }
+  const cands = sim.filter(n => n.priority > 1 && n.proposedHours > n.minHours)
+    .sort((a, b) => (b.priority - a.priority) || (b.perHr - a.perHr));
+  for (let steps = 0; bill > target && steps < 400; steps++) {
+    let reduced = false;
+    for (const n of cands) {
+      if (bill <= target) break;
+      if (n.proposedHours - 0.5 >= n.minHours) { n.proposedHours -= 0.5; bill -= 0.5 * n.perHr; reduced = true; }
+    }
+    if (!reduced) break;
+  }
+  const changes = sim.filter(n => n.proposedHours < n.hours);
+  const saved = changes.reduce((s, c) => s + (c.hours - c.proposedHours) * c.perHr, 0);
+  let html = `<div class="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 space-y-2 text-[10px]">
+    <div class="flex justify-between border-b border-zinc-800 pb-1.5"><span class="text-zinc-400">Optimized Target Bill:</span><span class="font-bold font-mono text-emerald-400">₱${bill.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>`;
+  if (bill > target) html += `<div class="text-amber-300 bg-amber-500/10 p-2 rounded border border-amber-500/20"><strong>Essential Base Limit:</strong> P1 loads prevent cutting below ₱${bill.toFixed(2)}.</div>`;
+  html += `<div class="font-semibold text-zinc-300">Node Adjustments:</div><div class="space-y-1 max-h-32 overflow-y-auto pr-1">`;
+  changes.forEach(c => {
+    html += `<div class="flex justify-between items-center bg-zinc-950 p-1.5 rounded border border-zinc-800"><div><div class="font-semibold text-zinc-200">${esc(c.name)}</div><div class="text-[9px] text-zinc-500 font-mono"><span class="line-through text-zinc-600">${c.hours}h</span> ➔ <strong class="text-orange-400">${c.proposedHours}h/d</strong></div></div><span class="text-emerald-400 font-bold font-mono">-₱${((c.hours - c.proposedHours) * c.perHr).toFixed(2)}</span></div>`;
+  });
+  html += `</div>`;
+  if (changes.length) html += `<button id="btnApply" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 rounded text-[10px]">Apply to Nodes (-₱${saved.toFixed(2)}/mo)</button>`;
+  html += `</div>`;
+  box.innerHTML = html;
+  const apply = document.getElementById('btnApply');
+  if (apply) apply.onclick = () => applyOptimizedSchedule(changes.map(c => ({ id: c.instanceId, hrs: c.proposedHours })));
+}
+function applyOptimizedSchedule(updates) {
+  updates.forEach(u => { const t = activeNodes.find(n => n.instanceId === u.id); if (t) t.hours = u.hrs; });
+  renderNodeCards();
+  recalculate();
+  executeSolver(document.getElementById('optimizationResults'));
+  showToast('Applied optimized hours to nodes!');
+}
+// ===================== 11. UI HELPERS =====================
+function toggleDockLeft() { document.getElementById('dockLeft').classList.toggle('-translate-x-[320px]'); }
+function toggleDockRight() { document.getElementById('dockRight').classList.toggle('translate-x-[360px]'); }
+function toggleModal(show) {
+  const m = document.getElementById('customModal');
+  m.classList.toggle('hidden', !show);
+  m.classList.toggle('flex', show);
+}
+function handleCustomSubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('custName').value.trim();
+  const brand = document.getElementById('custBrand').value.trim();
+  const isAC = document.getElementById('custIsAC').checked;
+  const id = 'custom_' + Date.now();
+  HARDWARE_CATALOG.push({
+    id, name, category: document.getElementById('custCat').value,
+    watts: parseInt(document.getElementById('custWatts').value, 10),
+    defaultHours: parseFloat(document.getElementById('custHours').value),
+    priority: parseInt(document.getElementById('custPriority').value, 10),
+    isAC, icon: isAC ? 'snowflake' : 'plug',
+    wiki: [], fallbackBrands: brand ? [brand] : []
+  });
+  document.getElementById('customForm').reset();
+  toggleModal(false);
+  renderCatalog();
+  spawnNodeAtCenter(id);
+}
+function showToast(msg, type = 'success') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `px-3 py-1.5 rounded-xl text-xs font-semibold shadow-2xl border bg-zinc-950 ${type === 'success' ? 'border-emerald-500/40 text-emerald-300' : 'border-zinc-700 text-zinc-200'}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), type === 'info' ? 8000 : 2400);
+}
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<a href="/" id="backHome" style="position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:2000;font:11px monospace;color:#a1a1aa;background:rgba(9,9,11,.85);border:1px solid #27272a;border-radius:999px;padding:4px 12px;text-decoration:none">&larr; Meralco Go home</a>
+</body>
+</html>

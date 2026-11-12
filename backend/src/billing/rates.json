@@ -1,0 +1,23 @@
+{
+  "version": "illustrative-2026-10",
+  "verified": false,
+  "source": "ILLUSTRATIVE PLACEHOLDER VALUES. Replace every figure with Meralco's published Summary Schedule of Rates (residential) for one named month, update this source line, and set verified to true.",
+  "perKwh": {
+    "generation": 7.2,
+    "transmission": 0.95,
+    "systemLoss": 0.62,
+    "universalCharges": 0.18,
+    "fitAll": 0.08
+  },
+  "distributionTiers": [
+    { "upToKwh": 200, "distribution": 1.0, "supply": 0.5, "metering": 0.33 },
+    { "upToKwh": 300, "distribution": 1.3, "supply": 0.5, "metering": 0.33 },
+    { "upToKwh": 400, "distribution": 1.6, "supply": 0.5, "metering": 0.33 },
+    { "upToKwh": null, "distribution": 2.0, "supply": 0.5, "metering": 0.33 }
+  ],
+  "fixedPerMonth": { "supply": 16.38, "metering": 5.0 },
+  "vat": {
+    "rate": 0.12,
+    "appliesTo": ["generation", "transmission", "systemLoss", "distribution", "supply", "metering"]
+  }
+}

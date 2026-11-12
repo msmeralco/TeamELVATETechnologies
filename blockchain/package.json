@@ -1,0 +1,19 @@
+{
+  "name": "meralco-go-blockchain",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HashAnchor contract + deploy tooling for the eGovChain (Hyperledger Besu) integration.",
+  "type": "commonjs",
+  "scripts": {
+    "compile": "hardhat compile",
+    "generate-wallet": "node scripts/generate-wallet.js",
+    "deploy": "node scripts/deploy.js",
+    "anchor:smoke": "node scripts/anchor-smoke.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.17",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.5"
+  }
+}

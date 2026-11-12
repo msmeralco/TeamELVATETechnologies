@@ -1,0 +1,18 @@
+{
+  "name": "meralco-go-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/server.js",
+    "test": "node --disable-warning=ExperimentalWarning --test \"test/**/*.test.js\""
+  },
+  "dependencies": {
+    "ethers": "6.13.5",
+    "express": "5.1.0",
+    "pg": "^8.13.1"
+  }
+}

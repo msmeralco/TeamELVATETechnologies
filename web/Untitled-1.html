@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meralco LoRaWAN RF Spatial Twin & Mesh Visualizer</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              DEFAULT: '#09090b',
+              card: '#121215',
+              elevated: '#18181c',
+              border: 'rgba(255, 255, 255, 0.08)',
+              borderHover: 'rgba(255, 255, 255, 0.16)'
+            },
+            meralco: {
+              orange: '#ff6600',
+              amber: '#f59e0b',
+              glow: 'rgba(255, 102, 0, 0.25)'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #09090b;
+      color: #f4f4f5;
+      font-family: 'Inter', sans-serif;
+      user-select: none;
+    }
+
+    /* Native Dark Map Styling */
+    .leaflet-container {
+      background: #09090b !important;
+      font-family: 'Inter', sans-serif !important;
+    }
+    .leaflet-control-attribution {
+      background: rgba(9, 9, 11, 0.8) !important;
+      color: #52525b !important;
+      font-size: 9px !important;
+    }
+    .leaflet-control-attribution a {
+      color: #71717a !important;
+    }
+
+    /* Custom Glassmorphism HUD Panels */
+    .glass-hud {
+      background: rgba(14, 14, 18, 0.82);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+    }
+    .glass-hud:hover {
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    /* Custom Leaflet Dark Popups */
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+      background: rgba(18, 18, 22, 0.95) !important;
+      color: #f4f4f5 !important;
+      border: 1px solid rgba(255, 102, 0, 0.35) !important;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8) !important;
+      border-radius: 12px !important;
+    }
+    .leaflet-popup-close-button {
+      color: #a1a1aa !important;
+    }
+
+    /* Animated RF Link Lines */
+    @keyframes rfDashFlow {
+      from { stroke-dashoffset: 24; }
+      to { stroke-dashoffset: 0; }
+    }
+    .rf-link-active {
+      animation: rfDashFlow 0.9s linear infinite;
+    }
+
+    /* Radar Pulse Animation for Gateways */
+    @keyframes radarPing {
+      0% { transform: scale(0.8); opacity: 0.9; }
+      100% { transform: scale(2.4); opacity: 0; }
+    }
+    .gateway-pulse-ring {
+      animation: radarPing 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    /* Draggable Item Cards in Dock */
+    .drag-item-token {
+      cursor: grab;
+      transition: all 0.15s ease;
+    }
+    .drag-item-token:active {
+      cursor: grabbing;
+      transform: scale(0.96);
+    }
+
+    /* Map Drop Active State */
+    .map-drop-highlight {
+      outline: 2px dashed #ff6600;
+      outline-offset: -6px;
+    }
+
+    /* Range Slider Styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #27272a;
+      border-radius: 9999px;
+      height: 4px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ff6600;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 102, 0, 0.8);
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+  </style>
+</head>
+
+<body class="w-screen h-screen relative flex flex-col antialiased selection:bg-orange-500 selection:text-white overflow-hidden">
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- FLOATING TOP NAVIGATION BAR HUD -->
+  <header class="fixed top-4 left-4 right-4 z-[999] flex items-center justify-between gap-4 pointer-events-auto">
+    <!-- Brand & Network Status -->
+    <div class="glass-hud px-4 py-2.5 rounded-2xl flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+        <i data-lucide="radio" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-extrabold text-sm tracking-tight text-white">Meralco LoRaWAN RF Twin</h1>
+          <span class="px-2 py-0.5 text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            AS923-1 PH Mesh
+          </span>
+        </div>
+        <p class="text-[11px] text-zinc-400">Drag gateways onto Metro Manila grid • Live RF telemetry & link budget</p>
+      </div>
+    </div>
+
+    <!-- Sector Presets & Environment Controls -->
+    <div class="glass-hud px-3 py-2 rounded-2xl flex items-center gap-3 text-xs">
+      <div class="flex items-center bg-zinc-950/80 border border-zinc-800/90 rounded-xl p-1 gap-1">
+        <span class="text-[10px] text-zinc-500 px-2 font-mono uppercase font-semibold">Sectors:</span>
+        <button onclick="flyToSector('ortigas')" class="px-2.5 py-1 text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-lg transition">Ortigas HQ</button>
+        <button onclick="flyToSector('qc')" class="px-2.5 py-1 text-xs font-medium text-orange-400 hover:bg-orange-500/10 rounded-lg transition">Quezon City</button>
+        <button onclick="flyToSector('bgc')" class="px-2.5 py-1 text-xs font-medium text-amber-400 hover:bg-amber-500/10 rounded-lg transition">BGC Grid</button>
+        <button onclick="clearGateways()" class="px-2.5 py-1 text-xs font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition">Clear All</button>
+      </div>
+
+      <div class="h-4 w-px bg-zinc-800"></div>
+
+      <!-- Urban Propagation Environment -->
+      <div class="flex items-center gap-2 font-mono">
+        <span class="text-zinc-400 text-[11px]">RF Density:</span>
+        <select id="envSelect" onchange="recalculateMesh()" class="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-cyan-400 font-bold focus:outline-none focus:border-cyan-500">
+          <option value="1.0">Suburban (1.0x Range)</option>
+          <option value="0.72" selected>Metro Urban (0.72x)</option>
+          <option value="0.50">Dense CBD High-Rise (0.50x)</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- NATIVE DARK-MODE MAP CANVAS -->
+  <main id="map" class="w-full h-full absolute inset-0 z-0"></main>
+
+  <!-- FLOATING LEFT DOCK: LoRaWAN ACCESS POINT CATALOG -->
+  <aside class="fixed top-20 left-4 bottom-4 w-72 glass-hud rounded-2xl p-4 flex flex-col justify-between z-[999] pointer-events-auto">
+    <div class="space-y-3 flex-1 flex flex-col min-h-0">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3 shrink-0">
+        <div class="flex items-center gap-2">
+          <i data-lucide="cpu" class="w-4 h-4 text-orange-500"></i>
+          <h2 class="font-bold text-white text-xs uppercase tracking-wider">Access Points (Gateways)</h2>
+        </div>
+        <span class="text-[10px] font-mono text-zinc-500">923 MHz</span>
+      </div>
+
+      <!-- Draggable Gateway Tokens -->
+      <div id="gatewayCatalog" class="space-y-2.5 overflow-y-auto flex-1 pr-1">
+        <!-- Generated via JS -->
+      </div>
+    </div>
+
+    <!-- Legend & Instructions -->
+    <div class="pt-3 border-t border-zinc-800/80 space-y-2 shrink-0">
+      <div class="grid grid-cols-2 gap-1.5 text-[10px] font-mono">
+        <div class="flex items-center gap-1.5 text-emerald-400">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]"></span> Linked Meter
+        </div>
+        <div class="flex items-center gap-1.5 text-zinc-500">
+          <span class="w-2 h-2 rounded-full bg-zinc-600"></span> Out of Range
+        </div>
+      </div>
+      <div class="text-[11px] text-zinc-400 flex items-center gap-2 pt-1">
+        <i data-lucide="move" class="w-4 h-4 text-orange-400 shrink-0"></i>
+        <span>Drag token onto map or click <strong>+</strong> to deploy. Drag markers to test coverage.</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- FLOATING RIGHT DOCK: MESH TELEMETRY & SELECTED GATEWAY INSPECTOR -->
+  <aside class="fixed top-20 right-4 bottom-4 w-80 glass-hud rounded-2xl p-4 flex flex-col justify-between z-[999] pointer-events-auto space-y-3 overflow-y-auto">
+
+    <!-- Top Telemetry Overview -->
+    <div class="space-y-3">
+      <div class="bg-zinc-950/85 rounded-xl p-3.5 border border-zinc-800 space-y-2.5">
+        <div class="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold flex items-center gap-1.5">
+            <i data-lucide="activity" class="w-3.5 h-3.5 text-orange-400"></i> Mesh Coverage Telemetry
+          </span>
+          <span id="coveragePctBadge" class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+            0% Online
+          </span>
+        </div>
+
+        <div class="flex items-baseline justify-between">
+          <div>
+            <span id="connectedMetersCount" class="text-3xl font-extrabold text-white font-mono">0</span>
+            <span id="totalMetersCount" class="text-sm text-zinc-500 font-mono">/ 24 Meters</span>
+          </div>
+          <div class="text-right font-mono">
+            <span class="text-[10px] text-zinc-500 block">Active Load Monitored</span>
+            <strong id="monitoredKwDisplay" class="text-sm text-orange-400">0.0 kW</strong>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800/80 text-[11px] font-mono">
+          <div class="bg-zinc-900/90 p-2 rounded-lg border border-zinc-800">
+            <span class="text-[9px] text-zinc-500 block">Deployed Gateways</span>
+            <span id="activeGatewaysDisplay" class="font-bold text-white mt-0.5 block">0 Nodes</span>
+          </div>
+          <div class="bg-zinc-900/90 p-2 rounded-lg border border-zinc-800">
+            <span class="text-[9px] text-zinc-500 block">Avg Link RSSI</span>
+            <span id="avgRssiDisplay" class="font-bold text-cyan-400 mt-0.5 block">-- dBm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected Gateway Tuning Inspector -->
+      <div id="gatewayInspector" class="bg-zinc-950/85 rounded-xl p-3.5 border border-zinc-800 space-y-2.5">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold flex items-center gap-1.5">
+            <i data-lucide="sliders" class="w-3.5 h-3.5 text-amber-400"></i> Gateway Range Tuner
+          </span>
+          <span id="selectedGwTag" class="text-[10px] font-mono text-orange-400">None Selected</span>
+        </div>
+
+        <div id="inspectorEmptyState" class="text-[11px] text-zinc-500 italic py-3 text-center">
+          Click any deployed gateway on the map to adjust TX power & range radius.
+        </div>
+
+        <div id="inspectorControls" class="hidden space-y-3 text-xs">
+          <div>
+            <div class="flex justify-between font-mono text-[11px] mb-1">
+              <span class="text-zinc-400">Effective Radius:</span>
+              <strong id="inspectorRadiusVal" class="text-orange-400">3.5 km</strong>
+            </div>
+            <input type="range" id="inspectorRadiusSlider" min="500" max="8000" step="100" value="3500" oninput="updateSelectedGatewayRadius(this.value)" class="w-full">
+          </div>
+
+          <div class="flex justify-between items-center text-[11px] font-mono bg-zinc-900/80 p-2 rounded-lg border border-zinc-800">
+            <span class="text-zinc-400">Linked Smart Meters:</span>
+            <strong id="inspectorLinkedCount" class="text-emerald-400">0</strong>
+          </div>
+
+          <button onclick="deleteSelectedGateway()" class="w-full py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg font-medium text-xs transition flex items-center justify-center gap-1.5">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Decommission Gateway
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Smart Meter Telemetry Feed -->
+    <div class="bg-zinc-950/85 rounded-xl p-3 border border-zinc-800 flex-1 flex flex-col min-h-[160px]">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2 shrink-0">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold flex items-center gap-1.5">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-400"></i> Live Meter Uplinks
+        </span>
+        <span class="text-[9px] font-mono text-zinc-500">SF7–SF12</span>
+      </div>
+      <div id="meterFeedList" class="space-y-1.5 overflow-y-auto flex-1 pr-1 font-mono text-[10px]">
+        <!-- Dynamic Uplink Rows -->
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- JAVASCRIPT SPATIAL RF ENGINE -->
+  <script>
+    // 1. GATEWAY HARDWARE CATALOG
+    const GATEWAY_TYPES = [
+      {
+        id: 'gw_substation',
+        name: 'Meralco Substation Tower',
+        model: 'Kerlink Wirnet iStation',
+        baseRange: 5000, // meters
+        channels: '16-Ch Full Duplex',
+        color: '#ff6600',
+        icon: 'radio-tower'
+      },
+      {
+        id: 'gw_pole',
+        name: 'Distribution Pole Node',
+        model: 'RAK7289 WisGate Edge',
+        baseRange: 2800,
+        channels: '8-Ch Outdoor IP67',
+        color: '#f59e0b',
+        icon: 'wifi'
+      },
+      {
+        id: 'gw_indoor',
+        name: 'Condo / Building Pico-Cell',
+        model: 'Dragino LPS8v2',
+        baseRange: 1200,
+        channels: '8-Ch High-Density',
+        color: '#06b6d4',
+        icon: 'router'
+      }
+    ];
+
+    // 2. SIMULATED MERALCO SMART METERS ACROSS METRO MANILA (Ortigas, QC, BGC, Mandaluyong)
+    const SMART_METERS = [
+      // Ortigas / Pasig Cluster
+      { id: 'MTR-ORT-01', name: 'Meralco Ave Commercial', lat: 14.5855, lng: 121.0630, kw: 4.2 },
+      { id: 'MTR-ORT-02', name: 'Capitol Commons Tower', lat: 14.5735, lng: 121.0615, kw: 8.5 },
+      { id: 'MTR-ORT-03', name: 'Emerald Ave Grid', lat: 14.5872, lng: 121.0612, kw: 3.1 },
+      { id: 'MTR-ORT-04', name: 'Valle Verde 1 Sub', lat: 14.5820, lng: 121.0725, kw: 1.8 },
+      { id: 'MTR-ORT-05', name: 'Shaw Blvd Feeder', lat: 14.5812, lng: 121.0535, kw: 2.9 },
+      { id: 'MTR-ORT-06', name: 'Greenhills East', lat: 14.6015, lng: 121.0510, kw: 2.1 },
+      // Quezon City Cluster
+      { id: 'MTR-QC-01', name: 'Cubao Araneta Hub', lat: 14.6205, lng: 121.0530, kw: 6.4 },
+      { id: 'MTR-QC-02', name: 'Timog Ave Commercial', lat: 14.6345, lng: 121.0365, kw: 3.7 },
+      { id: 'MTR-QC-03', name: 'Diliman UP Town', lat: 14.6500, lng: 121.0745, kw: 5.1 },
+      { id: 'MTR-QC-04', name: 'Katipunan Loyola', lat: 14.6380, lng: 121.0740, kw: 2.4 },
+      { id: 'MTR-QC-05', name: 'Eastwood Cyberpark', lat: 14.6095, lng: 121.0795, kw: 9.2 },
+      { id: 'MTR-QC-06', name: 'New Manila Res', lat: 14.6140, lng: 121.0320, kw: 1.4 },
+      // BGC / Makati Cluster
+      { id: 'MTR-BGC-01', name: 'High Street South', lat: 14.5495, lng: 121.0495, kw: 7.8 },
+      { id: 'MTR-BGC-02', name: 'Uptown Bonifacio', lat: 14.5565, lng: 121.0540, kw: 6.1 },
+      { id: 'MTR-BGC-03', name: 'McKinley West', lat: 14.5390, lng: 121.0450, kw: 3.9 },
+      { id: 'MTR-BGC-04', name: 'Rockwell Center', lat: 14.5650, lng: 121.0365, kw: 5.5 },
+      { id: 'MTR-BGC-05', name: 'Ayala Triangle', lat: 14.5570, lng: 121.0235, kw: 8.9 },
+      { id: 'MTR-BGC-06', name: 'Guadalupe Nuevo', lat: 14.5645, lng: 121.0465, kw: 1.9 }
+    ];
+
+    const SECTORS = {
+      ortigas: { center: [14.5831, 121.0615], zoom: 14 },
+      qc: { center: [14.6280, 121.0550], zoom: 13 },
+      bgc: { center: [14.5535, 121.0450], zoom: 14 }
+    };
+
+    // 3. STATE
+    let map;
+    let gateways = [];
+    let meterNodes = [];
+    let rfLinkLayer = L.layerGroup();
+    let selectedGatewayId = null;
+    let gatewayCounter = 1;
+
+    // 4. INITIALIZE MAP & UI
+    function init() {
+      map = L.map('map', {
+        zoomControl: false,
+        attributionControl: true
+      }).setView(SECTORS.ortigas.center, SECTORS.ortigas.zoom);
+
+      // Native CartoDB Dark Matter Tiles (Crisp, true dark UI)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap &copy; CARTO | Meralco LoRaWAN Spatial Twin'
+      }).addTo(map);
+
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      rfLinkLayer.addTo(map);
+
+      renderCatalog();
+      initSmartMeters();
+      setupMapDragDrop();
+
+      // Deploy 1 initial gateway at Meralco Ortigas HQ
+      spawnGateway('gw_substation', L.latLng(14.5850, 121.0625));
+      lucide.createIcons();
+    }
+
+    // 5. RENDER LEFT DOCK CATALOG
+    function renderCatalog() {
+      const container = document.getElementById('gatewayCatalog');
+      container.innerHTML = '';
+
+      GATEWAY_TYPES.forEach(gw => {
+        const card = document.createElement('div');
+        card.className = 'drag-item-token bg-zinc-950/90 border border-zinc-800 hover:border-orange-500/50 rounded-xl p-3 flex items-center justify-between transition';
+        card.draggable = true;
+
+        card.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <div class="p-2 rounded-lg border" style="background: ${gw.color}15; border-color: ${gw.color}40; color: ${gw.color};">
+              <i data-lucide="${gw.icon}" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-xs text-zinc-100 leading-tight">${gw.name}</h4>
+              <p class="text-[10px] text-zinc-400 font-mono mt-0.5">${gw.model}</p>
+              <span class="inline-block mt-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800">
+                Base Range: ${(gw.baseRange / 1000).toFixed(1)} km
+              </span>
+            </div>
+          </div>
+          <button onclick="spawnGateway('${gw.id}')" title="Deploy at Map Center"
+            class="w-7 h-7 bg-zinc-900 hover:bg-orange-600 hover:text-white text-zinc-300 border border-zinc-800 hover:border-orange-500 rounded-lg font-bold text-sm flex items-center justify-center transition shrink-0">
+            +
+          </button>
+        `;
+
+        card.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', gw.id);
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    // 6. SMART METER NODES ON MAP
+    function createMeterIcon(isConnected) {
+      const bg = isConnected ? '#10b981' : '#3f3f46';
+      const ring = isConnected ? 'rgba(16, 185, 129, 0.35)' : 'transparent';
+      return L.divIcon({
+        className: 'custom-meter-pin',
+        html: `
+          <div style="position:relative; width:20px; height:20px; display:flex; align-items:center; justify-content:center;">
+            <div style="position:absolute; inset:-4px; border-radius:50%; background:${ring};"></div>
+            <div style="width:12px; height:12px; border-radius:50%; background:${bg}; border:2px solid #09090b; box-shadow:0 0 8px ${bg};"></div>
+          </div>
+        `,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+    }
+
+    function initSmartMeters() {
+      SMART_METERS.forEach(m => {
+        const marker = L.marker([m.lat, m.lng], {
+          icon: createMeterIcon(false),
+          zIndexOffset: 100
+        }).addTo(map);
+
+        marker.bindPopup(`
+          <div class="font-mono text-xs space-y-1 p-0.5">
+            <div class="font-bold text-white flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> ${m.id}
+            </div>
+            <div class="text-zinc-400 text-[10px]">${m.name}</div>
+            <div class="text-orange-400 font-bold">Load: ${m.kw.toFixed(1)} kW</div>
+          </div>
+        `);
+
+        meterNodes.push({
+          ...m,
+          marker,
+          connected: false,
+          bestRssi: null,
+          linkedGateway: null
+        });
+      });
+    }
+
+    // 7. GATEWAY SPAWNING & DRAG-AND-DROP
+    function setupMapDragDrop() {
+      const mapEl = document.getElementById('map');
+
+      mapEl.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        mapEl.classList.add('map-drop-highlight');
+      });
+
+      mapEl.addEventListener('dragleave', () => {
+        mapEl.classList.remove('map-drop-highlight');
+      });
+
+      mapEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        mapEl.classList.remove('map-drop-highlight');
+        const typeId = e.dataTransfer.getData('text/plain');
+        if (!typeId) return;
+
+        const rect = mapEl.getBoundingClientRect();
+        const point = map.containerPointToLatLng([e.clientX - rect.left, e.clientY - rect.top]);
+        spawnGateway(typeId, point);
+      });
+    }
+
+    function createGatewayMarkerIcon(gwType, isSelected) {
+      const borderStyle = isSelected ? '2px solid #ffffff' : `2px solid ${gwType.color}`;
+      return L.divIcon({
+        className: 'custom-gateway-pin',
+        html: `
+          <div style="position:relative; width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+            <div class="gateway-pulse-ring" style="position:absolute; inset:0; border-radius:50%; border:2px solid ${gwType.color};"></div>
+            <div style="width:30px; height:30px; border-radius:10px; background:#09090b; border:${borderStyle}; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px ${gwType.color}80; z-index:2;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${gwType.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>
+              </svg>
+            </div>
+          </div>
+        `,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+    }
+
+    function spawnGateway(typeId, latLng = null) {
+      const gwType = GATEWAY_TYPES.find(g => g.id === typeId);
+      if (!gwType) return;
+
+      const pos = latLng || map.getCenter();
+      const uid = `GW-${String(gatewayCounter++).padStart(2, '0')}`;
+
+      const marker = L.marker(pos, {
+        icon: createGatewayMarkerIcon(gwType, true),
+        draggable: true,
+        zIndexOffset: 500
+      }).addTo(map);
+
+      const envFactor = parseFloat(document.getElementById('envSelect').value);
+      const effectiveRadius = Math.round(gwType.baseRange * envFactor);
+
+      // Outer RF Coverage Circle
+      const circle = L.circle(pos, {
+        radius: effectiveRadius,
+        color: gwType.color,
+        weight: 1.5,
+        dashArray: '6, 6',
+        fillColor: gwType.color,
+        fillOpacity: 0.10,
+        interactive: false
+      }).addTo(map);
+
+      // Inner Strong-Signal Core Circle (45% radius)
+      const coreCircle = L.circle(pos, {
+        radius: effectiveRadius * 0.45,
+        color: gwType.color,
+        weight: 0.8,
+        fillColor: gwType.color,
+        fillOpacity: 0.08,
+        interactive: false
+      }).addTo(map);
+
+      const gatewayObj = {
+        uid,
+        type: gwType,
+        baseRadius: gwType.baseRange,
+        effectiveRadius,
+        marker,
+        circle,
+        coreCircle,
+        linkedCount: 0
+      };
+
+      marker.on('drag', (e) => {
+        const newPos = e.latlng;
+        circle.setLatLng(newPos);
+        coreCircle.setLatLng(newPos);
+        recalculateMesh();
+      });
+
+      marker.on('click', () => {
+        selectGateway(uid);
+      });
+
+      gateways.push(gatewayObj);
+      selectGateway(uid);
+      recalculateMesh();
+      showToast(`Deployed ${uid} (${gwType.name})`);
+    }
+
+    // 8. GATEWAY SELECTION & INSPECTOR TUNING
+    function selectGateway(uid) {
+      selectedGatewayId = uid;
+      gateways.forEach(g => {
+        g.marker.setIcon(createGatewayMarkerIcon(g.type, g.uid === uid));
+      });
+
+      const gw = gateways.find(g => g.uid === uid);
+      if (!gw) {
+        document.getElementById('inspectorEmptyState').classList.remove('hidden');
+        document.getElementById('inspectorControls').classList.add('hidden');
+        document.getElementById('selectedGwTag').innerText = 'None Selected';
+        return;
+      }
+
+      document.getElementById('inspectorEmptyState').classList.add('hidden');
+      document.getElementById('inspectorControls').classList.remove('hidden');
+      document.getElementById('selectedGwTag').innerText = `${gw.uid} • ${gw.type.model.split(' ')[0]}`;
+      document.getElementById('inspectorRadiusSlider').value = gw.baseRadius;
+      document.getElementById('inspectorRadiusVal').innerText = `${(gw.effectiveRadius / 1000).toFixed(2)} km`;
+      document.getElementById('inspectorLinkedCount').innerText = `${gw.linkedCount} Meters`;
+    }
+
+    function updateSelectedGatewayRadius(newBaseVal) {
+      const gw = gateways.find(g => g.uid === selectedGatewayId);
+      if (!gw) return;
+      gw.baseRadius = parseFloat(newBaseVal);
+      recalculateMesh();
+    }
+
+    function deleteSelectedGateway() {
+      const idx = gateways.findIndex(g => g.uid === selectedGatewayId);
+      if (idx === -1) return;
+      const gw = gateways[idx];
+      map.removeLayer(gw.marker);
+      map.removeLayer(gw.circle);
+      map.removeLayer(gw.coreCircle);
+      gateways.splice(idx, 1);
+      selectedGatewayId = gateways.length ? gateways[gateways.length - 1].uid : null;
+      selectGateway(selectedGatewayId);
+      recalculateMesh();
+      showToast(`Decommissioned ${gw.uid}`);
+    }
+
+    function clearGateways() {
+      gateways.forEach(g => {
+        map.removeLayer(g.marker);
+        map.removeLayer(g.circle);
+        map.removeLayer(g.coreCircle);
+      });
+      gateways = [];
+      selectedGatewayId = null;
+      selectGateway(null);
+      recalculateMesh();
+      showToast('Cleared all gateways from grid');
+    }
+
+    // 9. CORE RF MESH & SIGNAL PROPAGATION SOLVER
+    function recalculateMesh() {
+      const envFactor = parseFloat(document.getElementById('envSelect').value);
+      rfLinkLayer.clearLayers();
+
+      // Update all gateway circle radii based on environment factor
+      gateways.forEach(g => {
+        g.effectiveRadius = Math.round(g.baseRadius * envFactor);
+        g.circle.setRadius(g.effectiveRadius);
+        g.coreCircle.setRadius(g.effectiveRadius * 0.45);
+        g.linkedCount = 0;
+      });
+
+      let connectedCount = 0;
+      let totalMonitoredKw = 0;
+      let rssiSum = 0;
+
+      // Evaluate every Smart Meter against all Gateways
+      meterNodes.forEach(m => {
+        const meterLatLng = L.latLng(m.lat, m.lng);
+        let bestGateway = null;
+        let minDistance = Infinity;
+
+        gateways.forEach(g => {
+          const dist = meterLatLng.distanceTo(g.marker.getLatLng());
+          if (dist <= g.effectiveRadius && dist < minDistance) {
+            minDistance = dist;
+            bestGateway = g;
+          }
+        });
+
+        if (bestGateway) {
+          m.connected = true;
+          m.linkedGateway = bestGateway.uid;
+          bestGateway.linkedCount++;
+
+          // Calculate realistic LoRa RSSI (-65 dBm close up down to -122 dBm at edge)
+          const ratio = minDistance / bestGateway.effectiveRadius;
+          const rssi = Math.round(-65 - (ratio * 57));
+          m.bestRssi = rssi;
+
+          connectedCount++;
+          totalMonitoredKw += m.kw;
+          rssiSum += rssi;
+
+          // Update marker icon to glowing green
+          m.marker.setIcon(createMeterIcon(true));
+
+          // Draw animated RF telemetry polyline from Gateway to Smart Meter
+          const polyline = L.polyline([bestGateway.marker.getLatLng(), meterLatLng], {
+            color: rssi > -95 ? '#10b981' : '#f59e0b',
+            weight: 1.8,
+            opacity: 0.75,
+            dashArray: '6, 6',
+            className: 'rf-link-active',
+            interactive: false
+          });
+          rfLinkLayer.addLayer(polyline);
+        } else {
+          m.connected = false;
+          m.linkedGateway = null;
+          m.bestRssi = null;
+          m.marker.setIcon(createMeterIcon(false));
+        }
+      });
+
+      // Update Inspector if a gateway is selected
+      if (selectedGatewayId) {
+        const selGw = gateways.find(g => g.uid === selectedGatewayId);
+        if (selGw) {
+          document.getElementById('inspectorRadiusVal').innerText = `${(selGw.effectiveRadius / 1000).toFixed(2)} km`;
+          document.getElementById('inspectorLinkedCount').innerText = `${selGw.linkedCount} Meters`;
+        }
+      }
+
+      // Update Telemetry HUD Readouts
+      const pct = Math.round((connectedCount / meterNodes.length) * 100);
+      document.getElementById('coveragePctBadge').innerText = `${pct}% Online`;
+      document.getElementById('connectedMetersCount').innerText = connectedCount;
+      document.getElementById('totalMetersCount').innerText = `/ ${meterNodes.length} Meters`;
+      document.getElementById('monitoredKwDisplay').innerText = `${totalMonitoredKw.toFixed(1)} kW`;
+      document.getElementById('activeGatewaysDisplay').innerText = `${gateways.length} Nodes`;
+      document.getElementById('avgRssiDisplay').innerText = connectedCount > 0
+        ? `${Math.round(rssiSum / connectedCount)} dBm`
+        : '-- dBm';
+
+      renderMeterFeed();
+    }
+
+    // 10. LIVE UPLINK FEED IN RIGHT DOCK
+    function renderMeterFeed() {
+      const feed = document.getElementById('meterFeedList');
+      feed.innerHTML = '';
+
+      // Sort connected meters first
+      const sorted = [...meterNodes].sort((a, b) => (b.connected - a.connected));
+
+      sorted.forEach(m => {
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between px-2 py-1.5 rounded-lg border ${
+          m.connected
+            ? 'bg-zinc-900/90 border-zinc-800 text-zinc-200'
+            : 'bg-zinc-950/40 border-zinc-900 text-zinc-600'
+        }`;
+
+        row.innerHTML = `
+          <div class="flex items-center gap-1.5 truncate">
+            <span class="w-1.5 h-1.5 rounded-full ${m.connected ? 'bg-emerald-400' : 'bg-zinc-700'} shrink-0"></span>
+            <span class="font-bold">${m.id}</span>
+            <span class="text-[9px] text-zinc-500 truncate">${m.connected ? `➔ ${m.linkedGateway}` : 'Offline'}</span>
+          </div>
+          <div class="shrink-0 text-right">
+            ${m.connected
+              ? `<span class="${m.bestRssi > -95 ? 'text-emerald-400' : 'text-amber-400'} font-bold">${m.bestRssi} dBm</span>`
+              : `<span>--</span>`
+            }
+          </div>
+        `;
+
+        row.style.cursor = 'pointer';
+        row.onclick = () => {
+          map.flyTo([m.lat, m.lng], 15, { duration: 0.8 });
+          m.marker.openPopup();
+        };
+
+        feed.appendChild(row);
+      });
+    }
+
+    // 11. NAVIGATION & TOASTS
+    function flyToSector(key) {
+      const s = SECTORS[key];
+      if (s) map.flyTo(s.center, s.zoom, { duration: 1.1 });
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'glass-hud px-4 py-2 rounded-full text-xs font-mono text-orange-400 border border-orange-500/40 shadow-xl transition-opacity duration-300';
+      toast.innerText = msg;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 2200);
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>

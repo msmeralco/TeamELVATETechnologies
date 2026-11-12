@@ -1,0 +1,2661 @@
+
+:root {
+  --orange: #fd5816;
+  --ember: #d8440a;
+  --glow: #ffe9df;
+  --ink: #14213d;
+  --slate: #5b6478;
+  --blue: #1f4fd8;
+  --paper: #f5f6f8;
+  --line: #e4e7ec;
+  --normal: #17875a;
+  --warning: #e8a100;
+  --anomaly: #c62828;
+  --offline: #8a93a6;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Instrument Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button,
+  input {
+    font: inherit;
+  }
+  button {
+    color: inherit;
+  }
+}
+
+button {
+  cursor: pointer;
+}
+.login-page {
+  min-height: 100vh;
+  padding: 44px;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  position: absolute;
+  top: 38px;
+  left: 44px;
+  font: 600 16px "Bricolage Grotesque";
+}
+.logo-placeholder {
+  width: 32px;
+  height: 32px;
+  padding: 5px;
+  border-radius: 7px;
+  background: var(--ink);
+  display: inline-block;
+  flex: none;
+}
+.logo-placeholder i {
+  width: 100%;
+  height: 100%;
+  border: 2px solid white;
+  border-radius: 3px;
+  display: block;
+}
+.login-card {
+  width: 440px;
+  padding: 38px 40px 30px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  text-align: center;
+}
+.login-lock {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 18px;
+  border-radius: 11px;
+  background: var(--glow);
+  display: grid;
+  place-items: center;
+}
+.login-card > span {
+  color: var(--slate);
+  font-size: 11px;
+  font-weight: 600;
+}
+.login-card h1 {
+  margin: 7px 0 5px;
+  font: 700 28px "Bricolage Grotesque";
+}
+.login-card > p {
+  margin: 0 0 28px;
+  color: var(--slate);
+  font-size: 13px;
+}
+.login-card label {
+  margin-bottom: 17px;
+  display: block;
+  text-align: left;
+}
+.login-card label > span {
+  margin-bottom: 7px;
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+.login-card label > div {
+  height: 48px;
+  padding: 0 13px;
+  border: 1px solid #cbd0d8;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--slate);
+}
+.login-card label > div:focus-within {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px #14213d0b;
+}
+.login-card input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  font-size: 13px;
+}
+.login-card label button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  color: var(--slate);
+}
+.forgot {
+  min-height: 32px;
+  margin: -8px 0 16px auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.primary-button {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--orange);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+}
+.primary-button:hover {
+  background: var(--ember);
+}
+.authorized-note {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--slate);
+  font-size: 10px;
+}
+.login-page > footer {
+  position: absolute;
+  bottom: 30px;
+  color: var(--offline);
+  font-size: 10px;
+}
+
+.dashboard {
+  width: 100%;
+  min-width: 1180px;
+  min-height: 100vh;
+  background: var(--paper);
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  position: relative;
+}
+.sidebar {
+  width: 248px;
+  height: 100vh;
+  padding: 24px 14px 18px;
+  border-right: 1px solid var(--line);
+  background: white;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+}
+.brand {
+  height: 52px;
+  padding: 0 9px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.brand b {
+  font: 600 15px "Bricolage Grotesque";
+}
+.brand span {
+  color: var(--slate);
+  font-size: 10px;
+}
+.sidebar nav {
+  padding-top: 20px;
+}
+.nav-group {
+  margin-bottom: 21px;
+}
+.nav-group > span {
+  padding: 0 12px 7px;
+  display: block;
+  color: var(--offline);
+  font-size: 10px;
+  font-weight: 600;
+}
+.nav-group button,
+.sidebar-bottom > button {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  display: grid;
+  grid-template-columns: 21px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  color: var(--slate);
+  text-align: left;
+  position: relative;
+}
+.nav-group button b,
+.sidebar-bottom > button b {
+  font-size: 12px;
+  font-weight: 500;
+}
+.nav-group button.active,
+.sidebar-bottom > button.active {
+  background: var(--glow);
+  color: var(--ink);
+}
+.nav-group button.active::before,
+.sidebar-bottom > button.active::before {
+  content: "";
+  width: 3px;
+  height: 24px;
+  border-radius: 0 3px 3px 0;
+  background: var(--orange);
+  position: absolute;
+  left: -14px;
+}
+.nav-group button.active b,
+.sidebar-bottom > button.active b {
+  font-weight: 600;
+}
+.nav-group button i {
+  min-width: 23px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #fce8e8;
+  color: var(--anomaly);
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 600;
+}
+.sidebar-bottom {
+  margin-top: auto;
+}
+.admin-user {
+  margin-top: 14px;
+  padding: 17px 4px 0;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 9px;
+}
+.admin-avatar,
+.top-avatar {
+  border-radius: 50%;
+  background: var(--ink);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+.admin-avatar {
+  width: 36px;
+  height: 36px;
+}
+.admin-user b,
+.admin-user small {
+  display: block;
+}
+.admin-user b {
+  font-size: 10px;
+}
+.admin-user small {
+  margin-top: 2px;
+  color: var(--slate);
+  font-size: 8px;
+}
+.admin-user > button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--slate);
+  display: grid;
+  place-items: center;
+}
+
+.workspace {
+  min-width: 0;
+}
+.topbar {
+  height: 76px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.page-title h1 {
+  margin: 0;
+  font: 600 21px "Bricolage Grotesque";
+}
+.page-title span {
+  margin-top: 3px;
+  display: block;
+  color: var(--slate);
+  font-size: 9px;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.global-search {
+  width: 286px;
+  height: 40px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--slate);
+}
+.global-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 10px;
+}
+.global-search kbd {
+  padding: 3px 5px;
+  border: 1px solid #d6dae1;
+  border-radius: 4px;
+  background: white;
+  color: var(--slate);
+  font: 8px "Instrument Sans";
+}
+.date-picker {
+  height: 40px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 500;
+}
+.date-picker svg:last-child {
+  transform: rotate(90deg);
+  color: var(--slate);
+}
+.notification-button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: white;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.notification-button i {
+  width: 7px;
+  height: 7px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: var(--anomaly);
+  position: absolute;
+  right: 8px;
+  top: 7px;
+}
+.top-avatar {
+  width: 40px;
+  height: 40px;
+  border: 0;
+}
+
+.dashboard-content {
+  padding: 20px 28px 70px;
+}
+.figure-strip {
+  height: 112px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+.figure-strip > div {
+  padding: 18px 19px;
+  position: relative;
+}
+.figure-strip > div:not(:last-child)::after {
+  content: "";
+  width: 1px;
+  position: absolute;
+  right: 0;
+  top: 19px;
+  bottom: 19px;
+  background: var(--line);
+}
+.figure-strip > div > span {
+  color: var(--slate);
+  font-size: 9px;
+}
+.figure-strip p {
+  margin: 6px 0 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.figure-strip strong {
+  font: 700 22px "Bricolage Grotesque";
+  font-variant-numeric: tabular-nums;
+}
+.figure-strip p b {
+  color: var(--slate);
+  font-size: 9px;
+  font-weight: 500;
+}
+.figure-strip small {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 8px;
+  font-weight: 600;
+}
+.figure-strip small em {
+  color: var(--slate);
+  font-style: normal;
+  font-weight: 400;
+}
+.figure-strip small.positive {
+  color: var(--normal);
+}
+.figure-strip small.negative {
+  color: var(--anomaly);
+}
+.figure-strip .skeleton {
+  margin-top: 8px;
+}
+
+.main-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(310px, 1fr);
+  gap: 14px;
+}
+.lower-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(300px, 1fr);
+  gap: 14px;
+}
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+.panel-header {
+  min-height: 64px;
+  padding: 14px 17px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.panel-header h2 {
+  margin: 0;
+  font: 600 14px "Bricolage Grotesque";
+}
+.panel-header p {
+  margin: 3px 0 0;
+  color: var(--slate);
+  font-size: 8px;
+}
+.legend {
+  display: flex;
+  gap: 14px;
+}
+.legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--slate);
+  font-size: 8px;
+}
+.legend i {
+  width: 17px;
+  height: 2px;
+  display: block;
+}
+.legend .actual {
+  background: var(--ink);
+}
+.legend .forecast {
+  background: repeating-linear-gradient(90deg, var(--blue) 0 4px, transparent 4px 7px);
+}
+.legend .variance {
+  height: 8px;
+  background: #f6dede;
+}
+.load-chart {
+  height: 243px;
+  padding: 15px 17px 5px 47px;
+  position: relative;
+}
+.load-chart svg {
+  width: 100%;
+  height: 195px;
+  overflow: visible;
+}
+.chart-grid {
+  fill: none;
+  stroke: #edf0f3;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.actual-line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.forecast-line {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+  vector-effect: non-scaling-stroke;
+}
+.variance-band {
+  fill: url(#varianceFill);
+}
+.chart-now {
+  fill: white;
+  stroke: var(--ink);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.y-axis {
+  position: absolute;
+  left: 15px;
+  top: 24px;
+  bottom: 39px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--offline);
+  font-size: 7px;
+}
+.x-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--offline);
+  font-size: 7px;
+}
+.chart-tooltip {
+  padding: 7px 9px;
+  border-radius: 7px;
+  background: var(--ink);
+  color: white;
+  position: absolute;
+  right: 18px;
+  top: 25px;
+  box-shadow: 0 7px 18px #14213d2b;
+}
+.chart-tooltip span,
+.chart-tooltip b,
+.chart-tooltip small {
+  display: block;
+}
+.chart-tooltip span {
+  opacity: 0.65;
+  font-size: 7px;
+}
+.chart-tooltip b {
+  margin-top: 3px;
+  font: 600 11px "Bricolage Grotesque";
+}
+.chart-tooltip small {
+  margin-top: 2px;
+  opacity: 0.65;
+  font-size: 7px;
+}
+.chart-footer {
+  min-height: 54px;
+  padding: 8px 17px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.chart-footer > div span,
+.chart-footer > div strong {
+  display: block;
+}
+.chart-footer > div span {
+  color: var(--slate);
+  font-size: 7px;
+}
+.chart-footer > div strong {
+  margin-top: 3px;
+  font: 600 11px "Bricolage Grotesque";
+}
+.warning-text {
+  color: var(--anomaly);
+}
+.chart-footer > button,
+.panel-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 8px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.chart-loading {
+  height: 297px;
+  padding: 35px 20px;
+}
+
+.map-panel {
+  padding-bottom: 13px;
+}
+.more-button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+}
+.grid-map {
+  height: 244px;
+  margin: 14px;
+  border-radius: 8px;
+  background-color: #edf0e9;
+  background-image:
+    linear-gradient(#dfe4db 1px, transparent 1px),
+    linear-gradient(90deg, #dfe4db 1px, transparent 1px);
+  background-size: 25px 25px;
+  overflow: hidden;
+  position: relative;
+}
+.grid-map .river {
+  width: 28px;
+  height: 140%;
+  background: #c9deeb;
+  position: absolute;
+  left: 25%;
+  top: -20%;
+  transform: rotate(-12deg);
+}
+.road {
+  height: 8px;
+  width: 130%;
+  border: 1px solid #dfe2e6;
+  background: white;
+  position: absolute;
+  left: -15%;
+}
+.road-one {
+  top: 35%;
+  transform: rotate(-14deg);
+}
+.road-two {
+  top: 69%;
+  transform: rotate(12deg);
+}
+.road-three {
+  width: 8px;
+  height: 130%;
+  left: 63%;
+  top: -15%;
+  transform: rotate(8deg);
+}
+.place-label {
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: #ffffffc9;
+  color: var(--slate);
+  position: absolute;
+  z-index: 2;
+  font-size: 7px;
+  font-weight: 600;
+}
+.place-label.center {
+  left: 47%;
+  top: 47%;
+}
+.place-label.longos {
+  left: 13%;
+  top: 68%;
+}
+.place-label.guinhawa {
+  right: 8%;
+  top: 22%;
+}
+.meter-pin {
+  width: 10px;
+  height: 10px;
+  border: 2px solid white;
+  border-radius: 50%;
+  position: absolute;
+  z-index: 3;
+  box-shadow: 0 1px 4px #14213d38;
+}
+.meter-pin.normal,
+.map-status i.normal {
+  background: var(--normal);
+}
+.meter-pin.warning,
+.map-status i.warning {
+  background: var(--warning);
+}
+.meter-pin.anomaly,
+.map-status i.anomaly {
+  background: var(--anomaly);
+}
+.meter-pin.offline,
+.map-status i.offline {
+  background: var(--offline);
+}
+.map-scale {
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: white;
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  color: var(--slate);
+  font-size: 6px;
+}
+.map-panel > .skeleton {
+  margin: 14px;
+  width: calc(100% - 28px) !important;
+}
+.map-status {
+  padding: 0 14px 11px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.map-status span {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 5px;
+  color: var(--slate);
+  font-size: 7px;
+}
+.map-status span i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.map-status span b {
+  color: var(--ink);
+  font-size: 7px;
+}
+.map-panel > .panel-link {
+  margin-left: 14px;
+}
+
+.attention-panel,
+.reports-panel {
+  min-height: 309px;
+}
+.top-link {
+  text-decoration: none;
+}
+.attention-table {
+  padding: 0 15px;
+}
+.table-row {
+  min-height: 44px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 80px 1.7fr 1.05fr 1fr 0.7fr 72px;
+  align-items: center;
+  gap: 8px;
+  color: var(--slate);
+  font-size: 8px;
+}
+.table-row:last-child {
+  border-bottom: 0;
+}
+.table-head {
+  min-height: 31px;
+  color: var(--offline);
+  font-size: 7px;
+}
+.severity {
+  width: max-content;
+  min-height: 23px;
+  padding: 0 6px;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-style: normal;
+  font-weight: 600;
+}
+.severity.high {
+  background: #fce8e8;
+  color: var(--anomaly);
+}
+.severity.medium {
+  background: #fff3d4;
+  color: #916400;
+}
+.severity.low {
+  background: #eceef2;
+  color: #667085;
+}
+.type-cell,
+.table-row strong {
+  color: var(--ink);
+}
+.table-row strong {
+  font-size: 8px;
+  font-weight: 600;
+}
+.review-button {
+  min-height: 29px;
+  padding: 0 8px;
+  border: 1px solid #cbd0d8;
+  border-radius: 99px;
+  background: white;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+  font-weight: 600;
+}
+.loading-row .skeleton {
+  margin: 0;
+}
+.attention-empty {
+  min-height: 222px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: left;
+}
+.attention-empty > span {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #e4f3ed;
+  color: var(--normal);
+  display: grid;
+  place-items: center;
+}
+.attention-empty h3 {
+  margin: 0;
+  font: 600 13px "Bricolage Grotesque";
+}
+.attention-empty p {
+  margin: 4px 0 0;
+  color: var(--slate);
+  font-size: 8px;
+}
+.report-list {
+  padding: 0 15px;
+}
+.report-list-row {
+  width: 100%;
+  min-height: 57px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+}
+.report-list-row:last-child {
+  border: 0;
+}
+.report-list-row > span,
+.report-list-row > .skeleton {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+}
+.report-list-row > span.high {
+  background: #fce8e8;
+  color: var(--anomaly);
+}
+.report-list-row > span.warning {
+  background: #fff3d4;
+  color: #916400;
+}
+.report-list-row > span.info {
+  background: #e9eeff;
+  color: var(--blue);
+}
+.report-list-row b,
+.report-list-row small {
+  display: block;
+}
+.report-list-row b {
+  font-size: 9px;
+}
+.report-list-row small {
+  margin-top: 3px;
+  color: var(--slate);
+  font-size: 7px;
+}
+.report-list-row .skeleton + .skeleton {
+  margin-top: 6px;
+}
+.skeleton {
+  border-radius: 5px;
+  background: #e8eaee;
+  display: block;
+}
+
+.page-tools {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.page-tools h2 {
+  margin: 0;
+  font: 600 19px "Bricolage Grotesque";
+}
+.page-tools p {
+  margin: 3px 0 0;
+  color: var(--slate);
+  font-size: 9px;
+}
+.page-tools > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.page-primary,
+.page-secondary,
+.area-select {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.page-primary {
+  border: 0;
+  background: var(--orange);
+  color: white;
+}
+.page-secondary,
+.area-select {
+  border: 1px solid #cbd0d8;
+  background: white;
+}
+.grid-map-page {
+  height: calc(100vh - 76px);
+  min-height: 760px;
+  position: relative;
+  overflow: hidden;
+}
+.full-map {
+  position: absolute;
+  inset: 0;
+  background-color: #e9ede7;
+  background-image:
+    linear-gradient(#dfe4dc 1px, transparent 1px),
+    linear-gradient(90deg, #dfe4dc 1px, transparent 1px);
+  background-size: 42px 42px;
+  overflow: hidden;
+}
+.map-river {
+  position: absolute;
+  background: #c9dfea;
+}
+.large-river {
+  width: 75px;
+  height: 135%;
+  left: 22%;
+  top: -17%;
+  transform: rotate(-12deg);
+  box-shadow:
+    inset 13px 0 0 #d7e8ef,
+    inset -12px 0 0 #d7e8ef;
+}
+.map-road {
+  position: absolute;
+  border: 1px solid #d8dde0;
+  background: white;
+  box-shadow: 0 0 0 2px #ffffff80;
+}
+.map-road-one {
+  width: 130%;
+  height: 13px;
+  left: -15%;
+  top: 31%;
+  transform: rotate(-13deg);
+}
+.map-road-two {
+  width: 130%;
+  height: 11px;
+  left: -15%;
+  top: 68%;
+  transform: rotate(11deg);
+}
+.map-road-three {
+  width: 11px;
+  height: 130%;
+  left: 62%;
+  top: -15%;
+  transform: rotate(8deg);
+}
+.map-road-four {
+  width: 9px;
+  height: 110%;
+  left: 43%;
+  top: -5%;
+  transform: rotate(-25deg);
+}
+.full-place {
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: #ffffffcc;
+  color: var(--slate);
+  position: absolute;
+  z-index: 2;
+  font-size: 9px;
+  font-weight: 600;
+}
+.full-place.malolos {
+  left: 52%;
+  top: 46%;
+  font-size: 11px;
+  color: var(--ink);
+}
+.full-place.longos {
+  left: 16%;
+  top: 68%;
+}
+.full-place.guinhawa {
+  right: 15%;
+  top: 21%;
+}
+.full-place.tikay {
+  right: 25%;
+  bottom: 15%;
+}
+.shape-pin {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 2px solid white;
+  position: absolute;
+  z-index: 5;
+  box-shadow: 0 2px 7px #14213d40;
+}
+.shape-pin.normal {
+  border-radius: 50%;
+  background: var(--normal);
+}
+.shape-pin.warning {
+  border: 0;
+  background: var(--warning);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.shape-pin.anomaly {
+  background: var(--anomaly);
+  transform: rotate(45deg);
+}
+.shape-pin.offline {
+  border: 3px solid var(--offline);
+  border-radius: 50%;
+  background: white;
+}
+.shape-pin.selected {
+  box-shadow:
+    0 0 0 5px #14213d22,
+    0 2px 7px #14213d40;
+}
+.shape-pin > span {
+  min-width: 24px;
+  height: 17px;
+  padding: 0 5px;
+  border: 2px solid white;
+  border-radius: 10px;
+  background: var(--ink);
+  color: white;
+  position: absolute;
+  left: 10px;
+  top: -10px;
+  display: grid;
+  place-items: center;
+  font-size: 7px;
+  font-weight: 600;
+}
+.cluster {
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: 4px solid #ffffffcc;
+  border-radius: 50%;
+  background: var(--ink);
+  color: white;
+  position: absolute;
+  z-index: 4;
+  box-shadow: 0 4px 14px #14213d35;
+}
+.cluster-one {
+  left: 33%;
+  top: 47%;
+}
+.cluster-two {
+  right: 18%;
+  top: 52%;
+}
+.cluster b,
+.cluster span {
+  display: block;
+}
+.cluster b {
+  font: 600 13px "Bricolage Grotesque";
+}
+.cluster span {
+  opacity: 0.65;
+  font-size: 6px;
+}
+.gateway {
+  position: absolute;
+  z-index: 3;
+}
+.gateway-one {
+  left: 45%;
+  top: 28%;
+}
+.gateway-two {
+  right: 25%;
+  bottom: 24%;
+}
+.gateway > i {
+  width: 190px;
+  height: 190px;
+  border: 1px solid #1f4fd830;
+  border-radius: 50%;
+  background: #1f4fd80a;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.gateway > span {
+  width: 35px;
+  height: 35px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: var(--blue);
+  color: white;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.gateway > b {
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: #ffffffd9;
+  position: absolute;
+  left: 42px;
+  top: 8px;
+  white-space: nowrap;
+  font-size: 7px;
+}
+.map-filter-panel {
+  width: 254px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 12px 32px #14213d1c;
+  position: absolute;
+  z-index: 10;
+  left: 22px;
+  top: 22px;
+}
+.map-filter-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+.map-filter-panel h2 {
+  margin: 0;
+  font: 600 14px "Bricolage Grotesque";
+}
+.map-filter-panel header button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 8px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.map-filter-panel > label {
+  margin-bottom: 11px;
+  display: block;
+}
+.map-filter-panel > label > span,
+.status-checks > span {
+  margin-bottom: 5px;
+  display: block;
+  color: var(--slate);
+  font-size: 8px;
+  font-weight: 600;
+}
+.filter-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 9px;
+}
+.filter-select svg {
+  transform: rotate(90deg);
+}
+.status-checks {
+  padding: 4px 0 10px;
+}
+.status-checks button {
+  width: 100%;
+  min-height: 31px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  grid-template-columns: 17px 8px 1fr auto;
+  align-items: center;
+  gap: 7px;
+  text-align: left;
+  font-size: 9px;
+}
+.status-checks button > i {
+  width: 15px;
+  height: 15px;
+  border: 1px solid #b8bec8;
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+}
+.status-checks button.checked > i {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: white;
+}
+.status-checks button > em {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.status-checks button > em.normal {
+  background: var(--normal);
+}
+.status-checks button > em.warning {
+  background: var(--warning);
+}
+.status-checks button > em.anomaly {
+  background: var(--anomaly);
+}
+.status-checks button > em.offline {
+  background: var(--offline);
+}
+.status-checks button > b {
+  color: var(--slate);
+  font-size: 8px;
+}
+.gateway-toggle {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.gateway-toggle > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9px;
+  font-weight: 600;
+}
+.gateway-toggle > i {
+  width: 34px;
+  height: 19px;
+  padding: 3px;
+  border-radius: 20px;
+  background: #c9ced6;
+  display: block;
+}
+.gateway-toggle > i em {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: white;
+  display: block;
+}
+.gateway-toggle > i.on {
+  background: var(--ink);
+}
+.gateway-toggle > i.on em {
+  transform: translateX(15px);
+}
+.map-controls {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  position: absolute;
+  z-index: 8;
+  right: 18px;
+  top: 18px;
+  overflow: hidden;
+}
+.map-controls button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: white;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+}
+.map-controls button:last-child {
+  border: 0;
+}
+.map-legend {
+  height: 37px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 8px 20px #14213d14;
+  position: absolute;
+  z-index: 8;
+  left: 22px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.map-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--slate);
+  font-size: 7px;
+}
+.map-legend span > i {
+  width: 8px;
+  height: 8px;
+}
+.map-legend i.normal {
+  border-radius: 50%;
+  background: var(--normal);
+}
+.map-legend i.warning {
+  background: var(--warning);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.map-legend i.anomaly {
+  background: var(--anomaly);
+  transform: rotate(45deg);
+}
+.map-legend i.offline {
+  border: 2px solid var(--offline);
+  border-radius: 50%;
+}
+.meter-drawer {
+  width: 400px;
+  height: 100%;
+  padding: 20px;
+  border-left: 1px solid var(--line);
+  background: white;
+  box-shadow: -14px 0 34px #14213d17;
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  top: 0;
+}
+.meter-drawer > header {
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+}
+.meter-drawer header span {
+  color: var(--slate);
+  font-size: 8px;
+}
+.meter-drawer h2 {
+  margin: 3px 0 0;
+  font: 600 18px "Bricolage Grotesque";
+}
+.meter-drawer header button {
+  width: 33px;
+  height: 33px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: white;
+}
+.drawer-customer {
+  min-height: 77px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 9px;
+}
+.drawer-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 600;
+}
+.drawer-customer b,
+.drawer-customer small {
+  display: block;
+}
+.drawer-customer b {
+  font-size: 10px;
+}
+.drawer-customer small {
+  margin-top: 3px;
+  color: var(--slate);
+  font-size: 7px;
+}
+.status-chip,
+.meter-status-chip {
+  width: max-content;
+  min-height: 23px;
+  padding: 0 7px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 600;
+}
+.status-chip.anomaly,
+.meter-status-chip.anomaly {
+  background: #fce8e8;
+  color: var(--anomaly);
+}
+.meter-status-chip.normal {
+  background: #e4f3ed;
+  color: var(--normal);
+}
+.meter-status-chip.warning {
+  background: #fff3d4;
+  color: #916400;
+}
+.meter-status-chip.offline {
+  background: #eceef2;
+  color: #667085;
+}
+.meter-status-chip > i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.meter-drawer > section {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.drawer-section-title {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+}
+.drawer-section-title b {
+  font-family: "Bricolage Grotesque";
+}
+.sparkline {
+  width: 100%;
+  height: 100px;
+  margin-top: 8px;
+  overflow: visible;
+}
+.sparkline path:first-child {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.sparkline .spark-area {
+  fill: #f0f2f4;
+  stroke: none;
+}
+.spark-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--offline);
+  font-size: 7px;
+}
+.drawer-facts {
+  margin: 0;
+}
+.drawer-facts > div {
+  min-height: 54px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.drawer-facts dt {
+  color: var(--slate);
+  font-size: 8px;
+}
+.drawer-facts dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+  font-weight: 600;
+}
+.signal-bars {
+  height: 17px;
+  display: inline-flex;
+  align-items: end;
+  gap: 2px;
+}
+.signal-bars i {
+  width: 3px;
+  background: #d5d9df;
+}
+.signal-bars i:nth-child(1) {
+  height: 4px;
+}
+.signal-bars i:nth-child(2) {
+  height: 7px;
+}
+.signal-bars i:nth-child(3) {
+  height: 11px;
+}
+.signal-bars i:nth-child(4) {
+  height: 15px;
+}
+.signal-bars i.on {
+  background: var(--normal);
+}
+.drawer-actions {
+  margin-top: 20px;
+  display: grid;
+  gap: 8px;
+}
+.drawer-primary,
+.drawer-secondary {
+  min-height: 42px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.drawer-primary {
+  border: 0;
+  background: var(--orange);
+  color: white;
+}
+.drawer-secondary {
+  border: 1px solid #cbd0d8;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.intelligence-page {
+  min-height: calc(100vh - 76px);
+  padding: 0 28px 40px;
+}
+.table-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+.table-tools {
+  height: 64px;
+  padding: 0 15px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.table-tools > label,
+.queue-tabs > label {
+  width: 235px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--slate);
+}
+.table-tools input,
+.queue-tabs input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 8px;
+}
+.filter-chips {
+  display: flex;
+  gap: 5px;
+}
+.filter-chips button {
+  min-height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  color: var(--slate);
+  font-size: 8px;
+  font-weight: 600;
+}
+.filter-chips button.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: white;
+}
+.filter-chips button b {
+  margin-left: 4px;
+  font-size: 7px;
+}
+.filter-button {
+  min-height: 32px;
+  margin-left: auto;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  font-size: 8px;
+  font-weight: 600;
+}
+.filter-button span {
+  min-width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: white;
+  display: inline-grid;
+  place-items: center;
+  font-size: 7px;
+}
+.bulk-bar {
+  height: 44px;
+  padding: 0 15px;
+  background: #edf1fa;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.bulk-bar b {
+  margin-right: 8px;
+  font-size: 9px;
+}
+.bulk-bar button {
+  min-height: 27px;
+  padding: 0 8px;
+  border: 1px solid #b9c3d9;
+  border-radius: 6px;
+  background: white;
+  font-size: 7px;
+  font-weight: 600;
+}
+.bulk-bar button:last-child {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+}
+.meter-table,
+.queue-table {
+  padding: 0 14px;
+}
+.meter-table-row {
+  min-height: 58px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 28px 1.05fr 1.15fr 0.85fr 0.65fr 1.1fr 0.65fr 0.85fr 28px;
+  align-items: center;
+  gap: 8px;
+  color: var(--slate);
+  font-size: 8px;
+}
+.meter-table-row:last-child {
+  border: 0;
+}
+.meter-table-head {
+  min-height: 35px;
+  color: var(--offline);
+  font-size: 7px;
+}
+.meter-table-head button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--offline);
+}
+.meter-table-row input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--ink);
+}
+.meter-link,
+.case-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 8px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.meter-table-row span b,
+.meter-table-row span small {
+  display: block;
+}
+.meter-table-row span b {
+  color: var(--ink);
+  font-size: 8px;
+}
+.meter-table-row span small {
+  margin-top: 3px;
+  font-size: 7px;
+}
+.row-more {
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+}
+.table-pagination {
+  height: 54px;
+  padding: 0 15px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.table-pagination > span {
+  color: var(--slate);
+  font-size: 8px;
+}
+.table-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.table-pagination button {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  font-size: 7px;
+}
+.table-pagination button.active {
+  background: var(--ink);
+  color: white;
+}
+.table-pagination button:disabled {
+  opacity: 0.45;
+}
+
+.detail-titlebar {
+  min-height: 76px;
+  display: grid;
+  grid-template-columns: 35px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.detail-titlebar > button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: white;
+}
+.detail-titlebar h2 {
+  margin: 0;
+  font: 600 19px "Bricolage Grotesque";
+}
+.detail-titlebar p {
+  margin: 3px 0 0;
+  color: var(--slate);
+  font-size: 8px;
+}
+.detail-titlebar > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.device-health,
+.case-figures {
+  height: 86px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: white;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.device-health > div,
+.case-figures > div {
+  padding: 14px 17px;
+  position: relative;
+}
+.device-health > div:not(:last-child)::after,
+.case-figures > div:not(:last-child)::after {
+  content: "";
+  width: 1px;
+  position: absolute;
+  right: 0;
+  top: 15px;
+  bottom: 15px;
+  background: var(--line);
+}
+.device-health span,
+.device-health strong,
+.device-health small,
+.case-figures span,
+.case-figures strong,
+.case-figures small {
+  display: block;
+}
+.device-health span,
+.case-figures span {
+  color: var(--slate);
+  font-size: 8px;
+}
+.device-health strong,
+.case-figures strong {
+  margin-top: 5px;
+  font: 600 16px "Bricolage Grotesque";
+}
+.device-health small,
+.case-figures small {
+  margin-top: 4px;
+  color: var(--normal);
+  font-size: 7px;
+}
+.device-health small i {
+  width: 5px;
+  height: 5px;
+  margin-right: 3px;
+  border-radius: 50%;
+  background: var(--normal);
+  display: inline-block;
+}
+.detail-chart-panel,
+.neighbor-panel {
+  margin-top: 13px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: white;
+}
+.admin-usage-chart {
+  height: 220px;
+  padding: 11px 18px 8px;
+  position: relative;
+}
+.admin-usage-chart svg {
+  width: 100%;
+  height: 180px;
+  overflow: visible;
+}
+.admin-chart-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--offline);
+  font-size: 7px;
+}
+.meter-detail-lower {
+  margin-top: 13px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px;
+}
+.detail-list-panel {
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: white;
+  padding: 0 14px;
+}
+.detail-list-panel > header,
+.activity-log > header {
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.detail-list-panel header h2,
+.activity-log header h2 {
+  margin: 0;
+  font: 600 13px "Bricolage Grotesque";
+}
+.detail-list-panel header button,
+.activity-log header button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 8px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.event-row,
+.sealed-row {
+  min-height: 57px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 9px;
+}
+.event-row:last-child,
+.sealed-row:last-child {
+  border: 0;
+}
+.event-row > i,
+.sealed-row > i {
+  width: 29px;
+  height: 29px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+}
+.event-row > i.high {
+  background: #fce8e8;
+  color: var(--anomaly);
+}
+.event-row > i.normal,
+.sealed-row > i {
+  background: #e4f3ed;
+  color: var(--normal);
+}
+.event-row > i.info {
+  background: #e9eeff;
+  color: var(--blue);
+}
+.event-row b,
+.event-row small,
+.sealed-row b,
+.sealed-row small {
+  display: block;
+}
+.event-row b,
+.sealed-row b {
+  font-size: 8px;
+}
+.event-row small,
+.sealed-row small {
+  margin-top: 3px;
+  color: var(--slate);
+  font-size: 7px;
+}
+.event-row em {
+  color: var(--slate);
+  font-size: 7px;
+  font-style: normal;
+}
+.sealed-row strong {
+  font: 600 9px "Bricolage Grotesque";
+}
+
+.unusual-panel {
+  min-height: 590px;
+}
+.queue-tabs {
+  height: 62px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.queue-tabs > button:not(.filter-button) {
+  height: 62px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--slate);
+  font-size: 9px;
+  font-weight: 600;
+}
+.queue-tabs > button.active {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+}
+.queue-tabs > button b {
+  min-width: 18px;
+  height: 18px;
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #eceef2;
+  display: inline-grid;
+  place-items: center;
+  font-size: 7px;
+}
+.queue-tabs > label {
+  margin-left: auto;
+}
+.queue-tabs .filter-button {
+  margin-left: 4px;
+}
+.queue-row {
+  min-height: 58px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 82px 1.6fr 1.05fr 0.9fr 0.7fr 0.7fr 1fr 0.75fr 26px;
+  align-items: center;
+  gap: 7px;
+  color: var(--slate);
+  font-size: 8px;
+}
+.queue-head {
+  min-height: 35px;
+  color: var(--offline);
+  font-size: 7px;
+}
+.queue-row strong {
+  color: var(--ink);
+  font-size: 8px;
+}
+.confidence {
+  color: var(--ink);
+  font-size: 8px;
+}
+.queue-status {
+  min-height: 23px;
+  padding: 0 7px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 600;
+}
+.queue-status.open {
+  background: #fce8e8;
+  color: var(--anomaly);
+}
+.queue-status.progress {
+  background: #e9eeff;
+  color: var(--blue);
+}
+.case-figures {
+  grid-template-columns: 0.8fr 0.8fr 0.8fr 2fr;
+}
+.case-figures .reason p {
+  margin: 5px 0 0;
+  font-size: 9px;
+  line-height: 1.4;
+}
+.normal-text {
+  color: var(--normal) !important;
+}
+.case-charts {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 13px;
+}
+.anomaly-chart {
+  position: relative;
+}
+.anomaly-window {
+  width: 29%;
+  position: absolute;
+  z-index: 0;
+  left: 25%;
+  top: 11px;
+  bottom: 29px;
+  background: #fce8e880;
+}
+.anomaly-window span {
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: var(--anomaly);
+  color: white;
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 6px;
+}
+.anomaly-actual {
+  fill: none;
+  stroke: var(--anomaly);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.verified-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--normal);
+  font-size: 8px;
+  font-weight: 600;
+}
+.neighbor-chart {
+  height: 171px;
+  padding: 20px 20px 5px;
+  display: flex;
+  align-items: end;
+  gap: 13px;
+}
+.neighbor-chart > div {
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: end;
+  gap: 5px;
+}
+.neighbor-chart i {
+  width: 18px;
+  border-radius: 3px 3px 0 0;
+  background: #cfd4dc;
+}
+.neighbor-chart .subject i {
+  background: var(--anomaly);
+}
+.neighbor-chart span {
+  color: var(--slate);
+  font-size: 6px;
+}
+.neighbor-panel > p {
+  margin: 0 15px 13px;
+  color: var(--slate);
+  font-size: 7px;
+}
+.activity-log {
+  margin-top: 13px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: white;
+}
+.activity-log > div {
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 9px;
+}
+.activity-log > div:last-child {
+  border: 0;
+}
+.activity-log > div > i {
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #eceef2;
+  display: grid;
+  place-items: center;
+}
+.activity-log b,
+.activity-log small {
+  display: block;
+}
+.activity-log b {
+  font-size: 8px;
+}
+.activity-log small {
+  margin-top: 2px;
+  color: var(--slate);
+  font-size: 7px;
+}
+.activity-log em {
+  color: var(--slate);
+  font-size: 7px;
+  font-style: normal;
+}
+
+.area-select svg {
+  transform: rotate(90deg);
+}
+.range-toggle {
+  height: 38px;
+  padding: 3px;
+  border-radius: 99px;
+  background: #e8eaee;
+  display: flex;
+}
+.range-toggle button {
+  padding: 0 11px;
+  border: 0;
+  border-radius: 99px;
+  background: transparent;
+  color: var(--slate);
+  font-size: 8px;
+  font-weight: 600;
+}
+.range-toggle button.active {
+  background: white;
+  color: var(--ink);
+  box-shadow: 0 1px 4px #14213d17;
+}
+.forecast-main-panel,
+.forecast-card,
+.growth-table {
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: white;
+}
+.forecast-summary {
+  text-align: right;
+}
+.forecast-summary span,
+.forecast-summary b,
+.forecast-summary small {
+  display: block;
+}
+.forecast-summary span {
+  color: var(--slate);
+  font-size: 7px;
+}
+.forecast-summary b {
+  margin-top: 2px;
+  font: 600 14px "Bricolage Grotesque";
+}
+.forecast-summary small {
+  margin-top: 2px;
+  color: var(--slate);
+  font-size: 7px;
+}
+.forecast-chart {
+  height: 264px;
+  padding: 10px 18px 7px;
+}
+.forecast-chart svg {
+  width: 100%;
+  height: 225px;
+  overflow: visible;
+}
+.confidence-band {
+  fill: #dce5ff;
+}
+.forecast-solid {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.forecast-chart > div {
+  display: flex;
+  justify-content: space-between;
+  color: var(--offline);
+  font-size: 7px;
+}
+.forecast-lower-grid {
+  margin-top: 13px;
+  display: grid;
+  grid-template-columns: 1.65fr 1fr;
+  gap: 13px;
+}
+.forecast-card {
+  padding: 14px 16px;
+}
+.forecast-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.forecast-card h2,
+.growth-table h2 {
+  margin: 0;
+  font: 600 13px "Bricolage Grotesque";
+}
+.forecast-card header p,
+.growth-table header p {
+  margin: 3px 0 0;
+  color: var(--slate);
+  font-size: 7px;
+}
+.forecast-card header > b {
+  font-size: 8px;
+}
+.histogram {
+  height: 126px;
+  margin-top: 11px;
+  display: flex;
+  align-items: end;
+  gap: 7px;
+}
+.histogram > div {
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: end;
+  gap: 4px;
+}
+.histogram i {
+  width: 100%;
+  max-width: 29px;
+  border-radius: 3px 3px 0 0;
+  background: var(--ink);
+}
+.histogram span {
+  color: var(--offline);
+  font-size: 6px;
+}
+.accuracy-panel header strong {
+  font: 600 18px "Bricolage Grotesque";
+}
+.accuracy-panel svg {
+  width: 100%;
+  height: 105px;
+  margin-top: 8px;
+  overflow: visible;
+}
+.accuracy-panel svg path:first-child {
+  fill: none;
+  stroke: var(--normal);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.accuracy-guide {
+  fill: none;
+  stroke: #d8dce2;
+  stroke-dasharray: 4 4;
+  vector-effect: non-scaling-stroke;
+}
+.accuracy-panel > div {
+  display: flex;
+  justify-content: space-between;
+  color: var(--offline);
+  font-size: 6px;
+}
+.growth-table {
+  margin-top: 13px;
+  padding: 0 15px;
+}
+.growth-table > header {
+  min-height: 52px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.growth-table header button {
+  min-height: 29px;
+  padding: 0 9px;
+  border: 1px solid #cbd0d8;
+  border-radius: 6px;
+  background: white;
+  font-size: 7px;
+  font-weight: 600;
+}
+.growth-head,
+.growth-row {
+  min-height: 38px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 50px 1.4fr 1fr 1fr 1fr 0.8fr;
+  align-items: center;
+  gap: 8px;
+  color: var(--slate);
+  font-size: 7px;
+}
+.growth-head {
+  min-height: 28px;
+  color: var(--offline);
+}
+.growth-row:last-child {
+  border: 0;
+}
+.growth-row span:nth-child(2) {
+  color: var(--ink);
+  font-weight: 600;
+}
+.growth-row .growth {
+  color: var(--anomaly);
+  font-weight: 600;
+}
+
+.placeholder-page {
+  min-height: calc(100vh - 76px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.placeholder-page > span {
+  width: 58px;
+  height: 58px;
+  border-radius: 13px;
+  background: white;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+}
+.placeholder-page h2 {
+  margin: 15px 0 4px;
+  font: 600 21px "Bricolage Grotesque";
+}
+.placeholder-page p {
+  margin: 0;
+  color: var(--slate);
+  font-size: 10px;
+}
+.placeholder-page button {
+  min-height: 38px;
+  margin-top: 17px;
+  padding: 0 14px;
+  border: 1px solid #cbd0d8;
+  border-radius: 99px;
+  background: white;
+  font-size: 10px;
+  font-weight: 600;
+}
+.prototype-state {
+  height: 38px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: white;
+  box-shadow: 0 8px 22px #14213d1a;
+  position: fixed;
+  z-index: 40;
+  right: 25px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.prototype-state > span {
+  padding: 0 8px;
+  color: var(--slate);
+  font-size: 8px;
+}
+.prototype-state button {
+  height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--slate);
+  font-size: 8px;
+  font-weight: 600;
+}
+.prototype-state button.active {
+  background: var(--ink);
+  color: white;
+}
+
+@media (min-width: 1440px) {
+  .dashboard {
+    min-height: 1024px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .dashboard {
+    min-width: 1000px;
+  }
+  .global-search {
+    width: 220px;
+  }
+  .dashboard-content {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+
+/* ---- additions for live data (not part of the original design export) ---- */
+.engine-pill { padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: white; color: var(--slate); font-size: 11px; font-weight: 600; white-space: nowrap; }
+.engine-pill.on { color: var(--normal); border-color: #bfe3d2; background: #effaf4; }
+.ops-empty { margin: 0; padding: 22px 18px; color: var(--slate); font-size: 13px; }
+.ops-note { margin: 12px 0 0; color: var(--slate); font-size: 11px; }
+.ops-note-box { margin: 0 0 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--glow); font-size: 12px; }
+.balance-block { padding: 0 18px 14px; }
+.ops-meter-table .meter-table-row, .ops-meter-table.meter-table .meter-table-row { grid-template-columns: 1.3fr 1.3fr 1fr 1fr 1.3fr .8fr 1fr; }
+.ops-queue .queue-row { grid-template-columns: 1fr 1.6fr 1.1fr .8fr 1.1fr 1fr 1fr; }
+.ops-reports .queue-row { grid-template-columns: 1.4fr 1.2fr 2fr 1.4fr .8fr 1.1fr; }
+.ops-select { height: 34px; padding: 0 8px; border: 1px solid #cbd0d8; border-radius: 8px; background: white; font-size: 12px; }
+.ops-sealed { align-items: flex-start; }
+.ops-sealed small { display: block; margin-top: 2px; word-break: break-all; }
+.ops-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ops-demo { margin: 0 28px 28px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: white; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ops-demo[hidden] { display: none; }
+.ops-demo select { height: 36px; padding: 0 8px; border: 1px solid #cbd0d8; border-radius: 8px; background: white; }
+.ops-demo-label { font: 700 13px "Bricolage Grotesque"; }
+.ops-sep { width: 1px; height: 24px; background: var(--line); }
+.ops-demo-state { width: 100%; color: var(--slate); font-size: 12px; }
+.warning-text { color: var(--warning); }
+.normal-text { color: var(--normal); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+:root {
+  --surface: #fff; --ink-2: #3b4660; --ink-3: #5b6478; --line-strong: #cbd0d8;
+  --series-1: #2a78d6; --series-2: #eb6834; --grid: #e1e0d9; --axis: #c3c2b7;
+  --status-good: #17875a; --status-warning: #e8a100; --status-serious: #ec835a; --status-critical: #c62828;
+}
+
+.ops-alert { border-bottom: 1px solid var(--line); }
+.ops-alert .queue-row { border-bottom: 0; }
+.ops-alert.new { background: var(--glow); }
+.ops-alert-detail { padding: 0 18px 14px; }
+.ops-alert-detail p { margin: 0 0 4px; font-size: 13px; }
+.ops-alert-detail small { display: block; margin-bottom: 10px; color: var(--slate); font-size: 11px; }
+.ops-report-list { margin: 0; padding: 0; list-style: none; }
+.ops-report-list li { padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.ops-report-list li.new { border-left: 3px solid var(--orange); }
+.ops-report-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.ops-report-head span, .ops-report-foot small { color: var(--slate); font-size: 12px; }
+.ops-report-list p { margin: 6px 0; font-size: 13px; }
+.ops-report-foot { margin-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* ---- design parity additions ---- */
+.full-map-inner { position: absolute; inset: 0; transform-origin: center; transition: transform .2s; }
+.ops-menu-wrap { position: relative; display: inline-grid; }
+.ops-menu { position: absolute; right: 0; top: 100%; z-index: 20; min-width: 160px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: white; box-shadow: 0 8px 24px #14213d25; display: grid; }
+.ops-menu button { padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; text-align: left; font-size: 12px; }
+.ops-menu button:hover { background: var(--glow); }
+.ops-filter-panel { margin: 0 18px 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--glow); display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.ops-filter-panel label { display: grid; gap: 4px; font-size: 11px; color: var(--slate); }
+.ops-sev-cell { display: flex; align-items: center; gap: 8px; }
+.ops-modal-back { position: fixed; inset: 0; z-index: 50; background: #14213d66; display: grid; place-items: center; padding: 16px; }
+.ops-modal { width: min(420px, 100%); padding: 22px; border-radius: 14px; background: white; display: grid; gap: 12px; box-shadow: 0 20px 50px #14213d40; }
+.ops-modal h2 { margin: 0; font: 700 18px "Bricolage Grotesque"; }
+.ops-modal label { display: grid; gap: 4px; font-size: 12px; color: var(--slate); }
+.ops-modal input, .ops-modal select { height: 38px; padding: 0 10px; border: 1px solid #cbd0d8; border-radius: 8px; background: white; font-size: 13px; }
+.ops-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; max-width: min(520px, calc(100vw - 32px)); padding: 12px 18px; border-radius: 10px; background: var(--ink); color: white; font-size: 13px; box-shadow: 0 8px 24px #14213d55; cursor: pointer; }
+.ops-settings { grid-template-columns: repeat(3, 1fr); }
+.meter-table-row, .queue-row { font-size: 12px; }
+@media (max-width: 800px) { .ops-settings { grid-template-columns: 1fr 1fr; } }
