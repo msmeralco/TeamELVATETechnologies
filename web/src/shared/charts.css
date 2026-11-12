@@ -1,0 +1,21 @@
+.viz { margin: 0; }
+.viz-plot { position: relative; width: 100%; }
+.viz-plot svg { display: block; overflow: visible; }
+.viz-tick { font-size: 11px; fill: var(--ink-3); }
+.viz-label { font-size: 12px; font-weight: 600; fill: var(--ink); }
+.viz-legend { display: flex; gap: 1rem; font-size: .8rem; color: var(--ink-2); margin-bottom: .5rem; }
+.viz-legend span { display: inline-flex; align-items: center; gap: .35rem; }
+.viz-key { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.viz-tip {
+  position: absolute; transform: translate(-50%, -100%); pointer-events: none; z-index: 5;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 6px 20px oklch(0.2 0.02 50 / 0.12);
+  padding: .45rem .6rem; font-size: .8rem; min-width: 9rem;
+}
+.viz-tip strong { display: block; font-weight: 600; margin-bottom: .15rem; }
+.viz-tip-row { display: flex; align-items: center; gap: .4rem; color: var(--ink-2); }
+.viz-tip-row b { margin-left: auto; color: var(--ink); font-weight: 600; }
+.viz-table { margin-top: .5rem; font-size: .8rem; color: var(--ink-2); }
+.viz-table summary { cursor: pointer; color: var(--ink-3); }
+.viz-table table { border-collapse: collapse; margin-top: .4rem; width: 100%; max-width: 24rem; }
+.viz-table th, .viz-table td { text-align: left; padding: .2rem .5rem .2rem 0; border-bottom: 1px solid var(--line); }

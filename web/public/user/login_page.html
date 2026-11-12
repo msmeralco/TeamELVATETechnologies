@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meralco Go – Smart Energy Management</title>
+ 
+  <!-- Google Fonts: Poppins & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+ 
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+ 
+  <!-- Tailwind Configuration for Custom Colors & Fonts -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: '#ff6a00',
+              orangeLight: '#ff9a3d',
+              tint: '#fff3e8',
+              ink: '#1f1a17',
+              muted: '#6c625b',
+              line: '#f0e4da'
+            }
+          },
+          fontFamily: {
+            display: ['Poppins', 'Segoe UI', 'system-ui', 'sans-serif'],
+            body: ['Inter', 'Segoe UI', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'card': '0 30px 70px -25px rgba(255, 106, 0, 0.32), 0 8px 24px rgba(31, 26, 23, 0.05)',
+            'orange-glow': '0 12px 26px rgba(255, 106, 0, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+
+  <style>
+    /* Custom architectural & energy gradient backdrop (replaces external building.png cleanly) */
+    .hero-backdrop {
+      background-color: #ffffff;
+      background-image:
+        radial-gradient(circle at 88% 12%, rgba(255, 106, 0, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 12% 75%, rgba(255, 154, 61, 0.14) 0%, transparent 45%),
+        linear-gradient(135deg, rgba(255, 243, 232, 0.75) 0%, rgba(255, 255, 255, 0.95) 60%, rgba(255, 243, 232, 0.5) 100%);
+    }
+
+
+    /* Subtle geometric architectural grid pattern overlay */
+    .arch-grid {
+      background-size: 48px 48px;
+      background-image:
+        linear-gradient(to right, rgba(240, 228, 218, 0.45) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(240, 228, 218, 0.45) 1px, transparent 1px);
+    }
+
+
+    /* Custom focus ring for input fields */
+    .input-group:focus-within {
+      border-color: #ff6a00;
+      box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.15);
+    }
+  </style>
+</head>
+<body class="font-body text-brand-ink bg-white antialiased selection:bg-brand-orange selection:text-white overflow-x-hidden">
+
+
+  <!-- ==================== 1. STICKY GLASSMORPHIC HEADER ==================== -->
+  <header class="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-brand-line transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+       
+        <!-- Logo & Brand -->
+        <a href="#" class="flex items-center gap-3.5 group focus:outline-none">
+          <div class="w-11 h-11 rounded-2xl text-white grid place-items-center font-display font-bold text-xl bg-gradient-to-br from-brand-orange to-brand-orangeLight shadow-md shadow-brand-orange/30 group-hover:scale-105 transition-transform">
+            M
+          </div>
+          <div>
+            <span class="font-display font-bold text-xl tracking-tight text-brand-ink block leading-none">Meralco Go</span>
+            <span class="text-xs font-medium text-brand-muted block mt-1"></span>
+          </div>
+        </a>
+
+
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden md:flex items-center gap-2">
+          <a href="#about-app" class="px-4 py-2 rounded-full text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange transition-colors">About the app</a>
+          <a href="#features" class="px-4 py-2 rounded-full text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange transition-colors">Features</a>
+          <a href="#about-meralco" class="px-4 py-2 rounded-full text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange transition-colors">About Meralco</a>
+          <a href="#news" class="px-4 py-2 rounded-full text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange transition-colors">News</a>
+        </nav>
+
+
+        <!-- Header Actions -->
+        <div class="flex items-center gap-3">
+          <button onclick="focusAuthCard('signup')" class="px-5 py-2.5 rounded-full border-2 border-brand-orange text-brand-orange font-semibold text-sm hover:bg-brand-orange hover:text-white transition-all cursor-pointer active:scale-95">
+            Sign up
+          </button>
+         
+          <!-- Mobile Menu Button -->
+          <button id="mobile-menu-btn" aria-label="Toggle Menu" class="md:hidden p-2.5 rounded-xl border border-brand-line text-brand-ink hover:bg-brand-tint transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Mobile Dropdown Navigation -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-brand-line px-4 pt-2 pb-5 space-y-1">
+      <a href="#about-app" class="block px-4 py-2.5 rounded-xl text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange">About the app</a>
+      <a href="#features" class="block px-4 py-2.5 rounded-xl text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange">Features</a>
+      <a href="#about-meralco" class="block px-4 py-2.5 rounded-xl text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange">About Meralco</a>
+      <a href="#news" class="block px-4 py-2.5 rounded-xl text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange">News</a>
+    </div>
+  </header>
+
+
+  <!-- ==================== 2. HERO SECTION (SPLIT LAYOUT) ==================== -->
+  <section class="relative hero-backdrop arch-grid border-b border-brand-line overflow-hidden">
+    <!-- Decorative blurred orange orbs -->
+    <div class="pointer-events-none absolute -top-24 -right-24 w-96 h-96 rounded-full bg-brand-orange/15 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-10 -left-24 w-80 h-80 rounded-full bg-brand-orangeLight/20 blur-3xl"></div>
+
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24 relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
+       
+        <!-- Left Column: Hero Copy, App Badges & Trust Stats -->
+        <div class="lg:col-span-7 space-y-7 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 bg-brand-tint border border-brand-orange/20 text-brand-orange font-semibold text-xs sm:text-sm px-4 py-1.5 rounded-full">
+            <span class="w-2 h-2 rounded-full bg-brand-orange animate-pulse"></span>
+            Hello, I'm Meralco GO
+          </div>
+
+
+          <h1 class="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl text-brand-ink tracking-tight leading-[1.12]">
+            Your Electrcity Management <span class="text-brand-orange">ON HAND</span>
+          </h1>
+
+
+         
+
+
+          <!-- App Store Download Badges -->
+          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3.5 pt-1">
+            <button onclick="showToast('Redirecting to Apple App Store for Meralco Go...')" class="flex items-center gap-3 bg-brand-ink hover:bg-neutral-800 text-white px-5 py-3 rounded-2xl transition-all shadow-md hover:-translate-y-0.5 cursor-pointer">
+              <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.96 6.32c.67-.81 1.12-1.94 1-3.07-.96.04-2.13.64-2.82 1.45-.61.7-.14 1.85-1.01 2.96 1.07.08 2.16-.53 2.83-1.34z"/>
+              </svg>
+              <div class="text-left">
+                <div class="text-[10px] uppercase tracking-wider text-neutral-300 leading-none">Download on the</div>
+                <div class="font-display font-semibold text-sm leading-tight mt-0.5">App Store</div>
+              </div>
+            </button>
+
+
+            <button onclick="showToast('Redirecting to Google Play Store for Meralco Go...')" class="flex items-center gap-3 bg-brand-ink hover:bg-neutral-800 text-white px-5 py-3 rounded-2xl transition-all shadow-md hover:-translate-y-0.5 cursor-pointer">
+              <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
+              </svg>
+              <div class="text-left">
+                <div class="text-[10px] uppercase tracking-wider text-neutral-300 leading-none">Get it on</div>
+                <div class="font-display font-semibold text-sm leading-tight mt-0.5">Google Play</div>
+              </div>
+            </button>
+          </div>
+
+
+          <!-- Quick Trust Stats -->
+          <div class="grid grid-cols-3 gap-4 pt-6 border-t border-brand-line max-w-xl mx-auto lg:mx-0">
+            <div>
+              <div class="font-display font-bold text-2xl sm:text-3xl text-brand-ink">7.8K+</div>
+              <div class="text-xs sm:text-sm text-brand-muted mt-0.5">Customers Served</div>
+            </div>
+            <div>
+              <div class="font-display font-bold text-2xl sm:text-3xl text-brand-orange">24/7</div>
+              <div class="text-xs sm:text-sm text-brand-muted mt-0.5">Monitoring</div>
+            </div>
+            <div>
+              <div class="font-display font-bold text-2xl sm:text-3xl text-brand-ink">Constant</div>
+              <div class="text-xs sm:text-sm text-brand-muted mt-0.5">Bill Posting</div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Right Column: Signature Interactive Sign-Up / Log-In Card -->
+        <div class="lg:col-span-5 flex justify-center lg:justify-end">
+          <div id="auth-card" class="w-full max-w-[440px] bg-white rounded-[28px] p-7 sm:p-9 border border-brand-line shadow-card transition-all">
+           
+            <!-- Sign Up / Log In Tab Switcher -->
+            <div class="grid grid-cols-2 p-1 bg-brand-tint rounded-2xl mb-6 border border-brand-line">
+              <button type="button" id="tab-signup" onclick="switchAuthMode('signup')" class="py-2.5 text-sm font-display font-semibold rounded-xl bg-white text-brand-orange shadow-sm transition-all cursor-pointer">
+                Sign up
+              </button>
+              <button type="button" id="tab-login" onclick="switchAuthMode('login')" class="py-2.5 text-sm font-display font-semibold rounded-xl text-brand-muted hover:text-brand-ink transition-all cursor-pointer">
+                Log in
+              </button>
+            </div>
+
+
+            <!-- Card Header -->
+            <span id="card-chip" class="inline-block bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full mb-3">
+              Create your account
+            </span>
+            <h2 id="card-title" class="font-display font-bold text-3xl text-brand-ink tracking-tight mb-2">
+              Sign <span class="text-brand-orange">up</span>
+            </h2>
+            <p id="card-sub" class="text-sm text-brand-muted mb-6">
+             
+            </p>
+
+
+            <!-- Form -->
+            <form id="auth-form" novalidate>
+              <!-- 1. Customer Account Number -->
+              <label for="acct" class="block font-semibold text-xs text-brand-ink mb-2">
+                Customer account number (CAN)
+              </label>
+              <div class="input-group flex items-center gap-2.5 border-[1.5px] border-brand-line rounded-2xl px-3.5 bg-white transition-all">
+                <svg class="w-5 h-5 text-brand-orange shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+                </svg>
+                <input id="acct" inputmode="numeric" autocomplete="off" placeholder="000-000-0000" maxlength="12" class="w-full py-3.5 text-base font-medium tracking-wider text-brand-ink bg-transparent outline-none placeholder:text-neutral-400">
+              </div>
+              <div id="hint" class="text-xs text-brand-muted mt-1.5 ml-0.5 min-h-[18px]">
+                Found on the top right of your Meralco bill.
+              </div>
+
+
+              <!-- 2. Password with Visibility Toggle -->
+              <label for="pw" class="block font-semibold text-xs text-brand-ink mt-3.5 mb-2">
+                Password
+              </label>
+              <div class="input-group flex items-center gap-2.5 border-[1.5px] border-brand-line rounded-2xl px-3.5 bg-white transition-all">
+                <svg class="w-5 h-5 text-brand-orange shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                <input id="pw" type="password" autocomplete="new-password" placeholder="At least 6 characters" class="w-full py-3.5 text-base font-medium text-brand-ink bg-transparent outline-none placeholder:text-neutral-400">
+                <button type="button" id="toggle-pw" aria-label="Toggle password visibility" class="text-brand-muted hover:text-brand-orange p-1 transition-colors cursor-pointer">
+                  <!-- Eye Open Icon -->
+                  <svg id="eye-open" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  <!-- Eye Off Icon -->
+                  <svg id="eye-closed" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                  </svg>
+                </button>
+              </div>
+              <div id="hint2" class="text-xs text-brand-muted mt-1.5 ml-0.5 min-h-[18px]"></div>
+
+
+              <!-- Submit Button -->
+              <button type="submit" id="go" class="w-full mt-4 py-4 rounded-2xl font-display font-semibold text-base text-white bg-gradient-to-r from-brand-orange to-brand-orangeLight shadow-orange-glow hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer">
+                Sign up
+              </button>
+
+
+              <!-- Interactive Feedback Box -->
+              <div id="ok" class="hidden mt-4 p-3.5 rounded-xl bg-brand-tint border border-brand-orange/25 text-[#a34400] text-sm font-medium flex items-start gap-2.5">
+                <svg class="w-5 h-5 text-brand-orange shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span id="ok-text">✓ Account verified! Welcome to Meralco Go.</span>
+              </div>
+            </form>
+
+
+            <!-- Forgot Password Link -->
+            <div class="mt-5 pt-4 border-t border-brand-line text-center">
+              <a href="#forgot" onclick="event.preventDefault(); showToast('Password reset link instructions sent to your registered mobile/email.')" class="text-brand-orange font-semibold text-sm hover:underline">
+                Forgot password?
+              </a>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== 3. ABOUT THE APP / KEY FEATURES ==================== -->
+  <section id="about-app" class="py-20 sm:py-24 bg-white">
+    <div id="features" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+     
+      <!-- Section Header -->
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <span class="inline-block bg-brand-tint text-brand-orange font-semibold text-xs px-3.5 py-1.5 rounded-full mb-3">
+          Why Meralco Go?
+        </span>
+        <h2 class="font-display font-bold text-3xl sm:text-4xl text-brand-ink tracking-tight">
+          Everything you need to <span class="text-brand-orange">power your day</span>
+        </h2>
+        <p class="text-brand-muted mt-3.5 text-base leading-relaxed">
+          Designed to put clarity and control back into your household or business electricity usage.
+        </p>
+      </div>
+
+
+      <!-- 3-Column Feature Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+       
+        <!-- Feature 1: Real-time Bill Tracking -->
+        <div class="group bg-white rounded-3xl p-8 border border-brand-line hover:border-brand-orange/40 shadow-sm hover:shadow-xl hover:shadow-brand-orange/10 transition-all duration-300">
+          <div class="w-14 h-14 rounded-2xl bg-brand-tint text-brand-orange flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-brand-orange group-hover:text-white transition-all">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <h3 class="font-display font-bold text-xl text-brand-ink mb-3">Real-time Bill Tracking</h3>
+          <p class="text-brand-muted text-sm leading-relaxed mb-5">
+            View itemized monthly statements, compare kWh trends over 12 months, and settle your balance instantly with zero convenience fee via e-wallets or cards.
+          </p>
+          <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-orange">
+            Instant e-Receipt included
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </span>
+        </div>
+
+
+        <!-- Feature 2: Appliance Energy Calculator -->
+        <div class="group bg-white rounded-3xl p-8 border border-brand-line hover:border-brand-orange/40 shadow-sm hover:shadow-xl hover:shadow-brand-orange/10 transition-all duration-300">
+          <div class="w-14 h-14 rounded-2xl bg-brand-tint text-brand-orange flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-brand-orange group-hover:text-white transition-all">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <h3 class="font-display font-bold text-xl text-brand-ink mb-3">Appliance Energy Calculator</h3>
+          <p class="text-brand-muted text-sm leading-relaxed mb-5">
+            Discover how much your aircon, refrigerator, or washing machine costs per hour. Simulate daily usage to hit your monthly budget target effortlessly.
+          </p>
+          <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-orange">
+            Smart Bright Ideas tips
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </span>
+        </div>
+
+
+        <!-- Feature 3: Instant Outage & Maintenance Alerts -->
+        <div class="group bg-white rounded-3xl p-8 border border-brand-line hover:border-brand-orange/40 shadow-sm hover:shadow-xl hover:shadow-brand-orange/10 transition-all duration-300">
+          <div class="w-14 h-14 rounded-2xl bg-brand-tint text-brand-orange flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-brand-orange group-hover:text-white transition-all">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+          </div>
+          <h3 class="font-display font-bold text-xl text-brand-ink mb-3">Outage & Maintenance Alerts</h3>
+          <p class="text-brand-muted text-sm leading-relaxed mb-5">
+            Receive proactive push notifications for scheduled grid upgrades in your barangay, or report downed lines and power interruptions in two taps.
+          </p>
+          <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-orange">
+            Live restoration tracker
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </span>
+        </div>
+
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== 4. ABOUT MERALCO HIGHLIGHT BANNER ==================== -->
+  <section id="about-meralco" class="py-16 sm:py-20 bg-brand-tint/60 border-y border-brand-line">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="bg-white rounded-[32px] p-8 sm:p-12 lg:p-14 border border-brand-line shadow-sm">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+         
+          <!-- Left Text Content -->
+          <div class="lg:col-span-7 space-y-5">
+            <span class="inline-block bg-brand-tint text-brand-orange font-semibold text-xs px-3.5 py-1.5 rounded-full">
+              About Meralco
+            </span>
+            <h2 class="font-display font-bold text-3xl sm:text-4xl text-brand-ink tracking-tight leading-tight">
+              Powering progress and <span class="text-brand-orange">smart grid innovation</span> across the Philippines
+            </h2>
+            <p class="text-brand-muted text-base leading-relaxed">
+              For over a century, the Manila Electric Company (Meralco) has been committed to delivering safe, reliable, and sustainable electricity to millions of homes and enterprises across Metro Manila and nearby provinces.
+            </p>
+            <p class="text-brand-muted text-base leading-relaxed">
+              Through Meralco Go and our ongoing smart-grid modernization, we empower every Filipino household with cleaner energy choices, net-metering support, and seamless digital self-service.
+            </p>
+            <div class="pt-2 flex flex-wrap gap-4">
+              <button onclick="focusAuthCard('signup')" class="px-6 py-3.5 rounded-2xl bg-brand-orange text-white font-display font-semibold text-sm shadow-md shadow-brand-orange/25 hover:bg-[#e55f00] transition-colors cursor-pointer">
+                Link Your Account Now
+              </button>
+              <a href="#news" class="px-6 py-3.5 rounded-2xl border border-brand-line text-brand-ink font-display font-semibold text-sm hover:bg-brand-tint transition-colors">
+                View Grid Updates
+              </a>
+            </div>
+          </div>
+
+
+          <!-- Right Architectural / Smart Grid Visual Card -->
+          <div class="lg:col-span-5">
+            <div class="relative rounded-3xl bg-gradient-to-br from-brand-orange to-brand-orangeLight p-7 sm:p-8 text-white overflow-hidden shadow-xl shadow-brand-orange/20">
+              <!-- Subtle geometric circles -->
+              <div class="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-white/15"></div>
+              <div class="absolute right-12 -top-12 w-32 h-32 rounded-full bg-white/10"></div>
+
+
+              <div class="relative z-10 space-y-6">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full">Service Coverage</span>
+                  <span class="font-display font-bold text-lg">39 Cities & 72 Municipalities</span>
+                </div>
+
+
+                <div class="space-y-4 pt-2">
+                  <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                    <div class="font-display font-bold text-lg">99.98% System Reliability</div>
+                    <p class="text-xs text-white/90 mt-1">Continuous 24/7 command center monitoring and rapid storm response crews.</p>
+                  </div>
+                  <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                    <div class="font-display font-bold text-lg">Green Energy & Solar Ready</div>
+                    <p class="text-xs text-white/90 mt-1">Track exported solar kWh directly inside the Meralco Go dashboard.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== 5. LATEST NEWS & ADVISORIES ==================== -->
+  <section id="news" class="py-20 sm:py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+     
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+        <div>
+          <span class="inline-block bg-brand-tint text-brand-orange font-semibold text-xs px-3.5 py-1.5 rounded-full mb-3">
+            Newsroom & Bulletins
+          </span>
+          <h2 class="font-display font-bold text-3xl sm:text-4xl text-brand-ink tracking-tight">
+            Latest <span class="text-brand-orange">News & Advisories</span>
+          </h2>
+        </div>
+        <p class="text-sm text-brand-muted max-w-md">
+          Stay informed on monthly generation rate adjustments, scheduled maintenance, and energy-saving programs.
+        </p>
+      </div>
+
+
+      <!-- 3-Card News Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+       
+        <!-- News Card 1 -->
+        <article class="flex flex-col justify-between bg-white rounded-3xl p-7 border border-brand-line hover:border-brand-orange/40 shadow-sm hover:shadow-lg transition-all">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <span class="bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full">Rate Update</span>
+              <time class="text-xs text-brand-muted font-medium">November 2026</time>
+            </div>
+            <h3 class="font-display font-bold text-lg text-brand-ink leading-snug mb-3">
+              November Electricity Rate Adjustment & Generation Charge Breakdown
+            </h3>
+            <p class="text-sm text-brand-muted leading-relaxed mb-6">
+              Lower transmission and Wholesale Electricity Spot Market (WESM) charges help cushion overall household rates this billing cycle.
+            </p>
+          </div>
+          <button onclick="openNewsModal(0)" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-orange hover:underline cursor-pointer w-fit">
+            Read more
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+          </button>
+        </article>
+
+
+        <!-- News Card 2 -->
+        <article class="flex flex-col justify-between bg-white rounded-3xl p-7 border border-brand-line hover:border-brand-orange/40 shadow-sm hover:shadow-lg transition-all">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <span class="bg-amber-50 text-amber-700 font-semibold text-xs px-3 py-1 rounded-full">Advisory</span>
+              <time class="text-xs text-brand-muted font-medium">November 10, 2026</time>
+            </div>
+            <h3 class="font-display font-bold text-lg text-brand-ink leading-snug mb-3">
+              Scheduled Grid Pole Relocation & Line Upgrading in Quezon City
+            </h3>
+            <p class="text-sm text-brand-muted leading-relaxed mb-6">
+              Temporary service interruptions will take place between 11:00 PM and 4:00 AM to install storm-resilient concrete poles and automated switches.
+            </p>
+          </div>
+          <button onclick="openNewsModal(1)" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-orange hover:underline cursor-pointer w-fit">
+            Read more
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+          </button>
+        </article>
+
+
+        <!-- News Card 3 -->
+        <article class="flex flex-col justify-between bg-white rounded-3xl p-7 border border-brand-line hover:border-brand-orange/40 shadow-sm hover:shadow-lg transition-all">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <span class="bg-emerald-50 text-emerald-700 font-semibold text-xs px-3 py-1 rounded-full">Sustainability</span>
+              <time class="text-xs text-brand-muted font-medium">November 4, 2026</time>
+            </div>
+            <h3 class="font-display font-bold text-lg text-brand-ink leading-snug mb-3">
+              Meralco Expands Rooftop Solar Net-Metering Fast-Track Program
+            </h3>
+            <p class="text-sm text-brand-muted leading-relaxed mb-6">
+              Homeowners can now apply for bi-directional smart meters directly through Meralco Go with streamlined digital inspection scheduling.
+            </p>
+          </div>
+          <button onclick="openNewsModal(2)" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-orange hover:underline cursor-pointer w-fit">
+            Read more
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+          </button>
+        </article>
+
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== 6. STRUCTURED FOOTER ==================== -->
+  <footer class="bg-brand-ink text-white pt-16 pb-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-white/10">
+       
+        <!-- Brand Column -->
+        <div class="lg:col-span-4 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl text-white grid place-items-center font-display font-bold text-lg bg-gradient-to-br from-brand-orange to-brand-orangeLight">
+              M
+            </div>
+            <div>
+              <span class="font-display font-bold text-lg block leading-none">Meralco Go</span>
+              <span class="text-xs text-neutral-400 block mt-1">Smart energy app</span>
+            </div>
+          </div>
+          <p class="text-sm text-neutral-400 leading-relaxed max-w-sm">
+            Empowering customers with transparent billing, real-time outage updates, and smart energy tools—anytime, anywhere.
+          </p>
+          <!-- Social Icons -->
+          <div class="flex items-center gap-3 pt-2">
+            <a href="#social-fb" onclick="event.preventDefault(); showToast('Opening Meralco Official Facebook Page')" aria-label="Facebook" class="w-9 h-9 rounded-full bg-white/10 hover:bg-brand-orange flex items-center justify-center transition-colors">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4v-8.5z"/></svg>
+            </a>
+            <a href="#social-x" onclick="event.preventDefault(); showToast('Opening Meralco Official X (Twitter) Feed')" aria-label="X" class="w-9 h-9 rounded-full bg-white/10 hover:bg-brand-orange flex items-center justify-center transition-colors">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="#social-yt" onclick="event.preventDefault(); showToast('Opening Meralco Official YouTube Channel')" aria-label="YouTube" class="w-9 h-9 rounded-full bg-white/10 hover:bg-brand-orange flex items-center justify-center transition-colors">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </a>
+          </div>
+        </div>
+
+
+        <!-- Quick Links -->
+        <div class="lg:col-span-2 space-y-3">
+          <h4 class="font-display font-semibold text-sm uppercase tracking-wider text-neutral-300">Platform</h4>
+          <ul class="space-y-2.5 text-sm text-neutral-400">
+            <li><a href="#about-app" class="hover:text-brand-orange transition-colors">About the App</a></li>
+            <li><a href="#features" class="hover:text-brand-orange transition-colors">Key Features</a></li>
+            <li><a href="#about-meralco" class="hover:text-brand-orange transition-colors">About Meralco</a></li>
+            <li><a href="#news" class="hover:text-brand-orange transition-colors">News & Advisories</a></li>
+          </ul>
+        </div>
+
+
+        <!-- Customer Services -->
+        <div class="lg:col-span-3 space-y-3">
+          <h4 class="font-display font-semibold text-sm uppercase tracking-wider text-neutral-300">Services</h4>
+          <ul class="space-y-2.5 text-sm text-neutral-400">
+            <li><a href="#auth-card" onclick="focusAuthCard('signup')" class="hover:text-brand-orange transition-colors">Enroll Account Number</a></li>
+            <li><a href="#features" class="hover:text-brand-orange transition-colors">Appliance Calculator</a></li>
+            <li><a href="#news" class="hover:text-brand-orange transition-colors">Outage Map & Schedule</a></li>
+            <li><a href="#news" class="hover:text-brand-orange transition-colors">Net-Metering Program</a></li>
+          </ul>
+        </div>
+
+
+        <!-- 24/7 Hotline Box -->
+        <div class="lg:col-span-3">
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-brand-orangeLight">24/7 Customer Hotline</span>
+            <div class="font-display font-extrabold text-3xl text-white tracking-tight">16211</div>
+            <p class="text-xs text-neutral-400 leading-relaxed">
+              Call anytime for power outage reports, billing inquiries, or emergency assistance.
+            </p>
+            <div class="text-xs text-neutral-300 pt-1">
+              Email: <span class="text-brand-orangeLight">customercare@meralco.com.ph</span>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+
+      <!-- Bottom Copyright -->
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
+        <p>© 2026 Manila Electric Company (Meralco). All rights reserved.</p>
+        <div class="flex items-center gap-6">
+          <a href="#privacy" onclick="event.preventDefault(); showToast('Viewing Meralco Data Privacy Notice')" class="hover:text-white transition-colors">Privacy Notice</a>
+          <a href="#terms" onclick="event.preventDefault(); showToast('Viewing Meralco Go Terms of Use')" class="hover:text-white transition-colors">Terms of Use</a>
+          <a href="#security" onclick="event.preventDefault(); showToast('Viewing Security & Anti-Scam Guidelines')" class="hover:text-white transition-colors">Security Tips</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ==================== NEWS DETAIL MODAL ==================== -->
+  <div id="news-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-brand-ink/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-7 sm:p-8 border border-brand-line shadow-2xl relative animate-[fadeIn_0.2s_ease-out]">
+      <button onclick="closeNewsModal()" aria-label="Close modal" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-brand-tint text-brand-ink hover:bg-brand-orange hover:text-white flex items-center justify-center transition-colors cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+      <span id="modal-tag" class="inline-block bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full mb-3">Advisory</span>
+      <div id="modal-date" class="text-xs text-brand-muted mb-2">November 2026</div>
+      <h3 id="modal-title" class="font-display font-bold text-2xl text-brand-ink leading-snug mb-4">Headline</h3>
+      <p id="modal-body" class="text-sm text-brand-muted leading-relaxed mb-6">Full article content goes here.</p>
+      <button onclick="closeNewsModal()" class="w-full py-3 rounded-xl bg-brand-orange text-white font-display font-semibold text-sm hover:bg-[#e55f00] transition-colors cursor-pointer">
+        Close Bulletin
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ==================== TOAST NOTIFICATION ==================== -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 translate-y-20 opacity-0 pointer-events-none transition-all duration-300 bg-brand-ink text-white px-5 py-3.5 rounded-2xl shadow-xl border border-white/10 flex items-center gap-3 text-sm font-medium">
+    <span class="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
+    <span id="toast-msg">Notification</span>
+  </div>
+
+
+  <!-- ==================== INTERACTIVE SCRIPTS ==================== -->
+  <script>
+    // 1. Mobile Menu Toggle
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+
+    // Close mobile menu when clicking a link
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+    });
+
+
+    // 2. Auth Card Mode Switcher (Sign up vs Log in)
+    let currentAuthMode = 'signup';
+    const tabSignup = document.getElementById('tab-signup');
+    const tabLogin = document.getElementById('tab-login');
+    const cardChip = document.getElementById('card-chip');
+    const cardTitle = document.getElementById('card-title');
+    const cardSub = document.getElementById('card-sub');
+    const goBtn = document.getElementById('go');
+    const okBox = document.getElementById('ok');
+    const okText = document.getElementById('ok-text');
+
+
+    function switchAuthMode(mode) {
+      currentAuthMode = mode;
+      okBox.classList.add('hidden');
+      document.getElementById('hint').textContent = 'Found on the top right of your Meralco bill.';
+      document.getElementById('hint').className = 'text-xs text-brand-muted mt-1.5 ml-0.5 min-h-[18px]';
+      document.getElementById('hint2').textContent = '';
+
+
+      if (mode === 'signup') {
+        tabSignup.className = 'py-2.5 text-sm font-display font-semibold rounded-xl bg-white text-brand-orange shadow-sm transition-all cursor-pointer';
+        tabLogin.className = 'py-2.5 text-sm font-display font-semibold rounded-xl text-brand-muted hover:text-brand-ink transition-all cursor-pointer';
+        cardChip.textContent = 'Create your account';
+        cardTitle.innerHTML = 'Sign <span class="text-brand-orange">up</span>';
+        cardSub.textContent = 'Enter your customer account number to start tracking your bill.';
+        goBtn.textContent = 'Sign up';
+      } else {
+        tabLogin.className = 'py-2.5 text-sm font-display font-semibold rounded-xl bg-white text-brand-orange shadow-sm transition-all cursor-pointer';
+        tabSignup.className = 'py-2.5 text-sm font-display font-semibold rounded-xl text-brand-muted hover:text-brand-ink transition-all cursor-pointer';
+        cardChip.textContent = 'Welcome back';
+        cardTitle.innerHTML = 'Log <span class="text-brand-orange">in</span>';
+        cardSub.textContent = '';
+        goBtn.textContent = 'Log in';
+      }
+    }
+
+
+    function focusAuthCard(mode) {
+      switchAuthMode(mode);
+      const acctInput = document.getElementById('acct');
+      acctInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => acctInput.focus(), 350);
+    }
+
+
+    // 3. Auto-formatting 10-digit Customer Account Number (000-000-0000)
+    const acct = document.getElementById('acct');
+    const hint = document.getElementById('hint');
+    const hint2 = document.getElementById('hint2');
+    const pw = document.getElementById('pw');
+
+
+    acct.addEventListener('input', () => {
+      const digits = acct.value.replace(/\D/g, '').slice(0, 10);
+      acct.value = digits.replace(/^(\d{3})(\d{0,3})(\d{0,4}).*/, (m, a, b, c) => [a, b, c].filter(Boolean).join('-'));
+      hint.className = 'text-xs text-brand-muted mt-1.5 ml-0.5 min-h-[18px]';
+      okBox.classList.add('hidden');
+    });
+
+
+    pw.addEventListener('input', () => {
+      hint2.textContent = '';
+      okBox.classList.add('hidden');
+    });
+
+
+    // 4. Password Visibility Toggle
+    const togglePwBtn = document.getElementById('toggle-pw');
+    const eyeOpen = document.getElementById('eye-open');
+    const eyeClosed = document.getElementById('eye-closed');
+
+
+    togglePwBtn.addEventListener('click', () => {
+      const isHidden = pw.type === 'password';
+      pw.type = isHidden ? 'text' : 'password';
+      eyeOpen.classList.toggle('hidden', isHidden);
+      eyeClosed.classList.toggle('hidden', !isHidden);
+    });
+
+
+    // 5. Form Validation & Interactive Feedback
+    document.getElementById('auth-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const isTenDigits = acct.value.replace(/\D/g, '').length === 10;
+      const isPwValid = pw.value.length >= 6;
+
+
+      hint.textContent = isTenDigits
+        ? 'Found on the top right of your Meralco bill.'
+        : 'Please enter all 10 digits of your account number.';
+      hint.className = isTenDigits
+        ? 'text-xs text-brand-muted mt-1.5 ml-0.5 min-h-[18px]'
+        : 'text-xs text-[#d93a00] font-medium mt-1.5 ml-0.5 min-h-[18px]';
+
+
+      hint2.textContent = isPwValid ? '' : 'Password must be at least 6 characters.';
+      hint2.className = isPwValid
+        ? 'text-xs text-brand-muted mt-1.5 ml-0.5 min-h-[18px]'
+        : 'text-xs text-[#d93a00] font-medium mt-1.5 ml-0.5 min-h-[18px]';
+
+
+      if (isTenDigits && isPwValid) {
+        okText.textContent = currentAuthMode === 'signup'
+          ? `✓ Account ${acct.value} verified! Demo registration complete.`
+          : `✓ Welcome back! Signed in to account ${acct.value}.`;
+        okBox.classList.remove('hidden');
+        setTimeout(() => { window.location.href = 'landing_page.html'; }, 1200); // Meralco Go: continue to the portal
+      } else {
+        okBox.classList.add('hidden');
+      }
+    });
+
+
+    // 6. News Modal Data & Controls
+    const newsArticles = [
+      {
+        tag: 'Rate Update',
+        date: 'November 2026',
+        title: 'November Electricity Rate Adjustment & Generation Charge Breakdown',
+        body: 'Meralco announced a downward adjustment in the generation charge for the November 2026 billing period, driven by improved power plant availability and lower Wholesale Electricity Spot Market (WESM) prices. Customers can view their exact per-kWh breakdown in the "My Bills" tab of Meralco Go.'
+      },
+      {
+        tag: 'Advisory',
+        date: 'November 10, 2026',
+        title: 'Scheduled Grid Pole Relocation & Line Upgrading in Quezon City',
+        body: 'To improve distribution reliability and support local road widening projects, Meralco crews will conduct line reconductoring and pole relocation along portions of Commonwealth Avenue and Katipunan Avenue between 11:00 PM and 4:00 AM. Affected enrolled accounts have been notified via SMS and push alerts.'
+      },
+      {
+        tag: 'Sustainability',
+        date: 'November 4, 2026',
+        title: 'Meralco Expands Rooftop Solar Net-Metering Fast-Track Program',
+        body: 'Residential customers installing rooftop solar PV systems can now submit their Certificate of Final Electrical Inspection (CFEI) and Net-Metering application straight from Meralco Go, reducing processing timelines by up to 40%.'
+      }
+    ];
+
+
+    const newsModal = document.getElementById('news-modal');
+    function openNewsModal(index) {
+      const article = newsArticles[index];
+      document.getElementById('modal-tag').textContent = article.tag;
+      document.getElementById('modal-date').textContent = article.date;
+      document.getElementById('modal-title').textContent = article.title;
+      document.getElementById('modal-body').textContent = article.body;
+      newsModal.classList.remove('hidden');
+      newsModal.classList.add('flex');
+    }
+
+
+    function closeNewsModal() {
+      newsModal.classList.add('hidden');
+      newsModal.classList.remove('flex');
+    }
+
+
+    newsModal.addEventListener('click', (e) => {
+      if (e.target === newsModal) closeNewsModal();
+    });
+
+
+    // 7. Toast Notification Helper
+    let toastTimer;
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3200);
+    }
+  </script>
+</body>
+</html>
+

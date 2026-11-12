@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meralco Go – Smart Energy Dashboard & Portal</title>
+ 
+  <!-- Google Fonts: Poppins & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+ 
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+ 
+  <!-- Tailwind Configuration -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: '#ff6a00',
+              orangeLight: '#ff9a3d',
+              tint: '#fff3e8',
+              ink: '#1f1a17',
+              muted: '#6c625b',
+              line: '#f0e4da',
+              cyanSoft: '#e4f6fb'
+            }
+          },
+          fontFamily: {
+            display: ['Poppins', 'Segoe UI', 'system-ui', 'sans-serif'],
+            body: ['Inter', 'Segoe UI', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'card': '0 24px 60px -25px rgba(255, 106, 0, 0.25), 0 6px 20px rgba(31, 26, 23, 0.04)',
+            'orange-glow': '0 12px 26px rgba(255, 106, 0, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+
+  <style>
+    .hero-backdrop {
+      background-color: #ffffff;
+      background-image:
+        radial-gradient(circle at 88% 10%, rgba(255, 106, 0, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 10% 80%, rgba(255, 154, 61, 0.12) 0%, transparent 45%),
+        linear-gradient(135deg, rgba(255, 243, 232, 0.72) 0%, rgba(255, 255, 255, 0.96) 60%, rgba(255, 243, 232, 0.45) 100%);
+    }
+
+
+    .arch-grid {
+      background-size: 44px 44px;
+      background-image:
+        linear-gradient(to right, rgba(240, 228, 218, 0.42) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(240, 228, 218, 0.42) 1px, transparent 1px);
+    }
+
+
+    /* Smooth accordion transition for the expandable Meralco bill summary */
+    .bill-drawer {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
+      opacity: 0;
+    }
+    .bill-drawer.open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+    }
+    .bill-drawer-inner {
+      overflow: hidden;
+    }
+
+
+    /* Bar chart smooth height transition */
+    .bar-fill {
+      transition: height 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
+    }
+
+
+    /* Custom range slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: #f0e4da;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      margin-top: -6px;
+      background-color: #ff6a00;
+      height: 18px;
+      width: 18px;
+      border-radius: 999px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(255, 106, 0, 0.45);
+    }
+  </style>
+</head>
+<body class="font-body text-brand-ink bg-[#fcfaf8] antialiased selection:bg-brand-orange selection:text-white overflow-x-hidden">
+
+
+  <!-- ==================== 1. STICKY TOP HEADER ==================== -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-brand-line transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20 gap-4">
+       
+        <!-- Brand + Active CAN Badge -->
+        <div class="flex items-center gap-4">
+          <a href="#" class="flex items-center gap-3 group focus:outline-none">
+            <div class="w-11 h-11 rounded-2xl text-white grid place-items-center font-display font-bold text-xl bg-gradient-to-br from-brand-orange to-brand-orangeLight shadow-md shadow-brand-orange/30 group-hover:scale-105 transition-transform">
+              M
+            </div>
+            <div>
+              <span class="font-display font-bold text-xl tracking-tight text-brand-ink block leading-none">Meralco Go</span>
+              <span class="text-[11px] font-medium text-brand-muted block mt-1">Smart Energy Portal</span>
+            </div>
+          </a>
+
+
+          <!-- Customer Account Pill (Desktop) -->
+          <div class="hidden xl:flex items-center gap-2.5 pl-4 border-l border-brand-line">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <div class="text-xs">
+              <span class="font-semibold text-brand-ink">OLIVIA DELA CRUZ</span>
+              <span class="text-brand-muted ml-1.5 font-mono bg-brand-tint px-2 py-0.5 rounded-md text-brand-orange font-semibold">CAN: 1234567890</span>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center gap-1.5">
+          <a href="#bill-overview" class="px-4 py-2 rounded-full text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange transition-colors">Dashboard</a>
+          <a href="#analytics-section" class="px-4 py-2 rounded-full text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange transition-colors">6-Mo Prediction</a>
+          <a href="#alerts-section" class="relative px-4 py-2 rounded-full text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange transition-colors">
+            Alerts
+            <span id="nav-alert-dot" class="hidden absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-orange"></span>
+          </a>
+          <a href="#report-section" class="px-4 py-2 rounded-full text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange transition-colors">Report</a>
+          <a href="#bottom-hub" class="px-4 py-2 rounded-full text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange transition-colors">Tools & News</a>
+        </nav>
+
+
+        <!-- Right Quick Actions -->
+        <div class="flex items-center gap-2.5">
+          <button onclick="openAccountModal()" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-brand-line text-brand-ink font-medium text-xs hover:bg-brand-tint hover:border-brand-orange/40 transition-all cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+            Switch Account
+          </button>
+          <button onclick="openPayModal()" class="px-5 py-2.5 rounded-full bg-gradient-to-r from-brand-orange to-brand-orangeLight text-white font-display font-semibold text-sm shadow-md shadow-brand-orange/25 hover:-translate-y-0.5 transition-all cursor-pointer active:scale-95">
+            Pay Now
+          </button>
+         
+          <!-- Mobile Menu Toggle -->
+          <button id="mobile-menu-btn" aria-label="Toggle Menu" class="md:hidden p-2.5 rounded-xl border border-brand-line text-brand-ink hover:bg-brand-tint transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Mobile Dropdown -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-brand-line px-4 pt-2 pb-4 space-y-1">
+      <div class="px-4 py-2 text-xs text-brand-muted border-b border-brand-line mb-1">
+        Account: <strong class="text-brand-ink">Olivia Dela Cruz</strong> · CAN <span class="text-brand-orange font-semibold">1234567890</span>
+      </div>
+      <a href="#bill-overview" class="block px-4 py-2 rounded-xl text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange">Dashboard & Bill</a>
+      <a href="#analytics-section" class="block px-4 py-2 rounded-xl text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange">6-Month Prediction</a>
+      <a href="#alerts-section" class="block px-4 py-2 rounded-xl text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange">Alerts & EMessage</a>
+      <a href="#report-section" class="block px-4 py-2 rounded-xl text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange">Report a Concern</a>
+      <a href="#bottom-hub" class="block px-4 py-2 rounded-xl text-sm font-medium text-brand-ink hover:bg-brand-tint hover:text-brand-orange">Insights & Meralco News</a>
+      <button onclick="openAccountModal()" class="w-full text-left px-4 py-2 rounded-xl text-sm font-semibold text-brand-orange hover:bg-brand-tint">Switch / Enroll Account</button>
+    </div>
+  </header>
+
+
+  <!-- ==================== 2. TOP HERO & EXPANDABLE BILL BUTTON SPACE ==================== -->
+  <section id="bill-overview" class="relative hero-backdrop arch-grid border-b border-brand-line pt-8 pb-10 sm:pt-12 sm:pb-14">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+     
+      <!-- Top Greeting & Bill Preset Switcher -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 bg-brand-tint border border-brand-orange/20 text-brand-orange font-semibold text-xs px-3.5 py-1 rounded-full mb-2">
+            <span class="w-2 h-2 rounded-full bg-brand-orange animate-pulse"></span>
+            Residential Service · Meter No. 123AB456789
+          </div>
+          <h1 class="font-display font-extrabold text-2xl sm:text-4xl text-brand-ink tracking-tight">
+            Magandang araw, <span class="text-brand-orange">Olivia!</span>
+          </h1>
+          <p class="text-sm text-brand-muted mt-1">
+            Billing Period: <strong class="text-brand-ink">07 Apr 2026 to 06 May 2026</strong> · Due Date: <strong class="text-brand-orange">20 May 2026</strong>
+          </p>
+        </div>
+
+
+        <!-- Scenario Switcher: Attached Bill (₱2,866.90) vs High-Summer Estimate (₱3,364.86) -->
+        <div class="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-brand-line shadow-sm self-start lg:self-auto">
+          <span class="text-[11px] font-semibold text-brand-muted pl-2.5 pr-1">Bill View:</span>
+          <button id="preset-actual" onclick="setBillScenario('actual')" class="px-3.5 py-1.5 rounded-xl text-xs font-display font-semibold bg-brand-orange text-white shadow-sm transition-all cursor-pointer">
+            Current Bill (₱2,866.90)
+          </button>
+          <button id="preset-alt" onclick="setBillScenario('alt')" class="px-3.5 py-1.5 rounded-xl text-xs font-display font-semibold text-brand-muted hover:text-brand-ink transition-all cursor-pointer">
+            Est. Peak (₱3,364.86)
+          </button>
+        </div>
+      </div>
+
+
+      <!-- DEDICATED INTERACTIVE SPACE: BILL PRICE BUTTON + CURRENT MONTH CONSUMPTION -->
+      <div class="bg-white rounded-[28px] p-5 sm:p-7 border border-brand-line shadow-card">
+        <div class="flex flex-col lg:flex-row items-stretch lg:items-center lg:justify-start gap-6 lg:gap-10">
+         
+          <!-- Sleek Stacked Two-in-One Bill & Consumption Action Card -->
+          <button id="bill-toggle-btn" onclick="toggleBillSummary()" aria-expanded="false" class="group w-full sm:min-w-[275px] sm:max-w-[310px] rounded-[20px] overflow-hidden border border-brand-orange/25 shadow-orange-glow hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer text-left focus:outline-none focus:ring-4 focus:ring-brand-orange/20 shrink-0">
+           
+            <!-- Top Section: Orange Gradient Price Header -->
+            <div class="bg-gradient-to-r from-[#ff6a00] to-[#ff922e] px-5 pt-4 pb-3.5 text-white">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-white/90">
+                  Total Amount Due
+                </span>
+                <span class="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                  <svg id="bill-chevron" class="w-3.5 h-3.5 text-white transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </span>
+              </div>
+              <div class="flex items-baseline gap-1 mt-1 tabular-nums">
+                <span class="font-display font-bold text-lg text-white/95">₱</span>
+                <span id="hero-bill-price" class="font-display font-extrabold text-[28px] leading-none tracking-tight">2,866.90</span>
+              </div>
+            </div>
+
+
+            <!-- Bottom Section: Compact Single-Line Consumption Metric Footer -->
+            <div class="bg-[#fff7f0] px-4 py-2.5 border-t border-brand-orange/15 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5">
+                <span class="w-5 h-5 rounded-md bg-brand-orange/15 text-brand-orange flex items-center justify-center shrink-0">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                  </svg>
+                </span>
+                <span id="hero-bill-kwh" class="font-display font-bold text-sm text-brand-ink tabular-nums">200 kWh</span>
+              </div>
+             
+              <div class="flex items-center gap-1.5">
+                <span id="hero-bill-rate" class="text-[11px] font-semibold text-brand-orange bg-white px-2 py-0.5 rounded-full border border-brand-line tabular-nums">
+                  ₱14.33/kWh
+                </span>
+                <span id="hero-bill-delta" class="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-md tabular-nums">
+                  ▼ 11%
+                </span>
+              </div>
+            </div>
+
+
+          </button>
+
+
+          <!-- Right: Quick Metadata & Expand Prompt -->
+          <div class="flex sm:items-center justify-between lg:justify-start gap-5 lg:gap-8 pt-3 lg:pt-0 border-t lg:border-t-0 border-brand-line flex-1 lg:flex-none">
+            <div class="text-xs space-y-1.5">
+              <div class="text-brand-muted">Next Meter Reading: <strong class="text-brand-ink">06 Jun 2026</strong></div>
+              <div class="text-brand-muted">Ave. Daily Cost: <strong id="hero-daily-cost" class="text-brand-ink">₱95.60 / day</strong></div>
+            </div>
+            <button onclick="toggleBillSummary()" class="px-4 py-2.5 rounded-xl border border-brand-orange/30 bg-brand-tint/50 text-brand-orange font-display font-semibold text-xs hover:bg-brand-orange hover:text-white transition-colors cursor-pointer shrink-0">
+              <span id="drawer-btn-label">View Bill Summary</span>
+            </button>
+          </div>
+
+
+        </div>
+
+
+        <!-- ==================== EXPANDABLE MERALCO BILL SUMMARY (FROM ATTACHED INVOICE) ==================== -->
+        <div id="bill-summary-drawer" class="bill-drawer">
+          <div class="bill-drawer-inner">
+            <div class="pt-7 mt-7 border-t-2 border-dashed border-brand-line">
+             
+              <!-- Official Invoice Top Banner -->
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#e4f6fb]/70 border border-sky-200/80 rounded-2xl p-4 sm:p-5 mb-6">
+                <div class="space-y-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wider bg-brand-ink text-white px-2.5 py-0.5 rounded">Billing Invoice</span>
+                    <span class="text-xs font-mono text-brand-muted">No. 123456789123</span>
+                    <span class="text-xs font-semibold text-brand-orange bg-white px-2.5 py-0.5 rounded-full border border-brand-line">REPRINT</span>
+                  </div>
+                  <div class="font-display font-bold text-base text-brand-ink pt-1">OLIVIA DELA CRUZ</div>
+                  <p class="text-xs text-brand-muted">123 MALIWANAG STREET, BARANGAY KAUNLARAN, STA. LUCIA, MANILA, METRO MANILA</p>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs bg-white/90 p-3.5 rounded-xl border border-sky-100">
+                  <div>
+                    <span class="text-brand-muted block">Customer Account No.</span>
+                    <strong class="font-mono text-sm text-brand-ink">1234567890</strong>
+                  </div>
+                  <div>
+                    <span class="text-brand-muted block">Bill Date</span>
+                    <strong class="text-brand-ink">18 May 2026</strong>
+                  </div>
+                  <div>
+                    <span class="text-brand-muted block">Due Date</span>
+                    <strong class="text-brand-orange">20 May 2026</strong>
+                  </div>
+                </div>
+              </div>
+
+
+              <!-- 2-Column Detailed Invoice Content -->
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+               
+                <!-- Left 6 Cols: Meter Readings, Consumption Explained & Environmental Impact -->
+                <div class="lg:col-span-6 space-y-5">
+                 
+                  <!-- Meter Reading Calculation Box -->
+                  <div class="bg-[#fcfaf8] rounded-2xl p-5 border border-brand-line">
+                    <div class="flex items-center justify-between mb-3">
+                      <h3 class="font-display font-bold text-sm text-brand-ink">Meter Reading & Actual Consumption</h3>
+                      <span class="text-[11px] font-mono text-brand-muted">Meter: 123AB456789</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center items-center">
+                      <div class="bg-white p-3 rounded-xl border border-brand-line">
+                        <span class="text-[11px] text-brand-muted block">Current Reading</span>
+                        <strong id="inv-curr-read" class="font-display font-bold text-base sm:text-lg text-brand-ink">47,843</strong>
+                      </div>
+                      <div class="bg-white p-3 rounded-xl border border-brand-line relative">
+                        <span class="hidden sm:grid place-items-center w-5 h-5 rounded-full bg-brand-tint text-brand-orange font-bold text-xs absolute -left-3 top-1/2 -translate-y-1/2">−</span>
+                        <span class="text-[11px] text-brand-muted block">Previous Reading</span>
+                        <strong class="font-display font-bold text-base sm:text-lg text-brand-ink">47,643</strong>
+                      </div>
+                      <div class="bg-brand-tint p-3 rounded-xl border border-brand-orange/30 relative">
+                        <span class="hidden sm:grid place-items-center w-5 h-5 rounded-full bg-brand-orange text-white font-bold text-xs absolute -left-3 top-1/2 -translate-y-1/2">=</span>
+                        <span class="text-[11px] text-brand-orange font-semibold block">Actual Consumption</span>
+                        <strong id="inv-actual-kwh" class="font-display font-extrabold text-base sm:text-lg text-brand-orange">200 kWh</strong>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3 pt-3 border-t border-brand-line text-[11px] text-brand-muted">
+                      <div>Meter Reading Date: <strong class="text-brand-ink">06 May 2026</strong></div>
+                      <div>Next Reading: <strong class="text-brand-ink">06 Jun 2026</strong></div>
+                      <div>Ave. Temp: <strong class="text-brand-ink">29.2°C ▼</strong></div>
+                    </div>
+                  </div>
+
+
+                  <!-- Your Consumption Explained & Typical Consumption -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-2xl p-4 border border-brand-line space-y-2.5">
+                      <h4 class="font-display font-bold text-xs uppercase tracking-wider text-brand-ink">Your consumption explained</h4>
+                      <div class="flex items-start gap-2 text-xs">
+                        <span class="text-emerald-600 font-bold mt-0.5">▼</span>
+                        <p class="text-brand-muted">This bill is <strong class="text-brand-ink">11% lower (+20kWh)</strong> vs previous billing period</p>
+                      </div>
+                      <div class="flex items-start gap-2 text-xs">
+                        <span class="text-brand-orange font-bold mt-0.5">▲</span>
+                        <p class="text-brand-muted">This bill is <strong class="text-brand-ink">6% higher (-12kWh)</strong> vs same period last year</p>
+                      </div>
+                    </div>
+
+
+                    <div class="bg-brand-tint/60 rounded-2xl p-4 border border-brand-orange/20">
+                      <h4 class="font-display font-bold text-xs uppercase tracking-wider text-brand-ink mb-2.5">Your typical consumption</h4>
+                      <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-white rounded-xl p-2 border border-brand-line">
+                          <strong class="font-display font-bold text-xs text-brand-ink block">180 kWh</strong>
+                          <span class="text-[10px] text-brand-muted leading-tight block mt-0.5">Ave. monthly (12 mos)</span>
+                        </div>
+                        <div class="bg-white rounded-xl p-2 border border-brand-line">
+                          <strong id="inv-daily-kwh" class="font-display font-bold text-xs text-brand-ink block">6.67 kWh</strong>
+                          <span class="text-[10px] text-brand-muted leading-tight block mt-0.5">Ave. daily this period</span>
+                        </div>
+                        <div class="bg-white rounded-xl p-2 border border-brand-line">
+                          <strong id="inv-daily-php" class="font-display font-bold text-xs text-brand-orange block">₱95.6</strong>
+                          <span class="text-[10px] text-brand-muted leading-tight block mt-0.5">Ave. daily cost</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+
+                  <!-- Environmental Impact -->
+                  <div class="bg-emerald-50/60 rounded-2xl p-4 border border-emerald-200/70">
+                    <div class="flex items-center justify-between mb-2.5">
+                      <h4 class="font-display font-bold text-xs text-emerald-950">Environmental Impact</h4>
+                      <span class="text-[10px] text-emerald-800">Be energy efficient. Help take care of our environment</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                      <div class="bg-white rounded-xl p-2.5 border border-emerald-100">
+                        <div id="env-kwh" class="font-display font-bold text-sm text-brand-ink">200 kWh</div>
+                        <div class="text-[10px] text-brand-muted">Electricity Used</div>
+                      </div>
+                      <div class="bg-white rounded-xl p-2.5 border border-emerald-100">
+                        <div id="env-co2" class="font-display font-bold text-sm text-emerald-700">0.1387 tCO₂</div>
+                        <div class="text-[10px] text-brand-muted">Equiv. GHG Emissions</div>
+                      </div>
+                      <div class="bg-white rounded-xl p-2.5 border border-emerald-100">
+                        <div id="env-trees" class="font-display font-bold text-sm text-emerald-700">6 Trees**</div>
+                        <div class="text-[10px] text-brand-muted">Offset Emissions</div>
+                      </div>
+                    </div>
+                  </div>
+
+
+                </div>
+
+
+                <!-- Right 6 Cols: Bill Computation Summary Table -->
+                <div class="lg:col-span-6 bg-white rounded-2xl p-5 sm:p-6 border border-brand-line shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-brand-line">
+                      <h3 class="font-display font-bold text-base text-brand-ink">Bill Computation Summary</h3>
+                      <span class="text-xs font-semibold text-brand-muted">Amounts in PHP (₱)</span>
+                    </div>
+
+
+                    <div class="space-y-2 text-xs sm:text-sm">
+                      <div class="flex justify-between items-center py-1 font-semibold text-brand-ink">
+                        <span>Remaining Balance from previous bill</span>
+                        <span>0.00</span>
+                      </div>
+
+
+                      <div class="flex justify-between items-center py-1.5 px-2.5 rounded-lg bg-brand-tint/70 font-bold text-brand-ink">
+                        <span>Charges for this billing period</span>
+                        <span id="comp-period-total">2,866.90</span>
+                      </div>
+
+
+                      <div class="pl-3 space-y-1.5 text-xs text-brand-muted border-l-2 border-brand-line ml-1">
+                        <div class="flex justify-between">
+                          <span>Generation</span>
+                          <span id="comp-gen" class="font-medium text-brand-ink">1,758.84</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span>Transmission</span>
+                          <span id="comp-trans" class="font-medium text-brand-ink">281.48</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span>System Loss</span>
+                          <span id="comp-loss" class="font-medium text-brand-ink">159.88</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span>Distribution (Meralco)</span>
+                          <span id="comp-dist" class="font-medium text-brand-ink">298.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span>Senior Citizen</span>
+                          <span id="comp-sc" class="font-medium text-brand-ink">0.02</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span>Government Taxes</span>
+                          <span id="comp-tax" class="font-medium text-brand-ink">262.14</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span>Universal Charges</span>
+                          <span id="comp-uc" class="font-medium text-brand-ink">64.32</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span>FIT-All (Renewable)</span>
+                          <span id="comp-fit" class="font-medium text-brand-ink">40.22</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span>GEA-All (Renewable)</span>
+                          <span class="font-medium text-brand-ink">0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span>Lifeline</span>
+                          <span class="font-medium text-brand-ink">2.00</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+
+                  <!-- Total Amount Due Footer -->
+                  <div class="mt-5 pt-4 border-t-2 border-brand-ink flex items-center justify-between">
+                    <div>
+                      <span class="font-display font-bold text-base text-brand-ink block">Total Amount Due</span>
+                      <span class="text-[11px] text-brand-muted">Please pay on or before 20 May 2026</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span id="comp-total-due" class="font-display font-extrabold text-xl sm:text-2xl text-brand-orange">₱ 2,866.90</span>
+                      <button onclick="openPayModal()" class="px-4 py-2 rounded-xl bg-brand-ink text-white font-display font-semibold text-xs hover:bg-brand-orange transition-colors cursor-pointer">
+                        Settle Bill
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </section>
+
+
+  <!-- ==================== 3. MAIN DASHBOARD WORKSPACE ==================== -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+
+
+    <!-- ==================== A. ANALYTICS BOX: 6-MONTH CONSUMPTION PREDICTION BAR GRAPH ==================== -->
+    <section id="analytics-section" class="bg-white rounded-[28px] p-6 sm:p-8 border border-brand-line shadow-card">
+     
+      <!-- Header & Controls -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-brand-line">
+        <div>
+          <div class="inline-flex items-center gap-2 bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full mb-2">
+            AI Energy Forecast · Next 6 Months
+          </div>
+          <h2 class="font-display font-bold text-2xl sm:text-3xl text-brand-ink tracking-tight">
+            6-Month Consumption <span class="text-brand-orange">Prediction</span>
+          </h2>
+          <p class="text-xs sm:text-sm text-brand-muted mt-1">
+            Projected kWh usage for <strong class="text-brand-ink">Jun – Nov 2026</strong> based on your Jan–May 2026 meter history & seasonal weather trends.
+          </p>
+        </div>
+
+
+        <!-- Forecast Mode Toggle & Legend -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center bg-brand-tint/70 p-1 rounded-2xl border border-brand-line">
+            <button id="mode-baseline" onclick="setForecastMode('baseline')" class="px-3.5 py-2 rounded-xl text-xs font-display font-semibold bg-white text-brand-orange shadow-sm transition-all cursor-pointer">
+              Baseline Forecast
+            </button>
+            <button id="mode-ecosaver" onclick="setForecastMode('ecosaver')" class="px-3.5 py-2 rounded-xl text-xs font-display font-semibold text-brand-muted hover:text-brand-ink transition-all cursor-pointer">
+              Eco-Saver (-12%)
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- KPI Summary Strip for Next 6 Months -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 my-6">
+        <div class="p-4 rounded-2xl bg-[#fcfaf8] border border-brand-line">
+          <span class="text-xs text-brand-muted block">6-Mo Predicted Total</span>
+          <strong id="kpi-total-kwh" class="font-display font-extrabold text-xl sm:text-2xl text-brand-ink mt-1 block">1,148 kWh</strong>
+          <span class="text-[11px] text-brand-muted">Jun – Nov 2026</span>
+        </div>
+        <div class="p-4 rounded-2xl bg-brand-tint/60 border border-brand-orange/20">
+          <span class="text-xs text-brand-muted block">Est. 6-Mo Cumulative Bill</span>
+          <strong id="kpi-total-php" class="font-display font-extrabold text-xl sm:text-2xl text-brand-orange mt-1 block">₱16,451</strong>
+          <span class="text-[11px] text-brand-muted">~₱14.33/kWh blended</span>
+        </div>
+        <div class="p-4 rounded-2xl bg-[#fcfaf8] border border-brand-line">
+          <span class="text-xs text-brand-muted block">Peak Forecast Month</span>
+          <strong id="kpi-peak-month" class="font-display font-extrabold text-xl sm:text-2xl text-brand-ink mt-1 block">Jun (216 kWh)</strong>
+          <span class="text-[11px] text-amber-700 font-medium">Warm dry-season tail</span>
+        </div>
+        <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/70">
+          <span class="text-xs text-emerald-900 block">Selected Month Detail</span>
+          <strong id="kpi-selected-month" class="font-display font-extrabold text-xl sm:text-2xl text-emerald-700 mt-1 block">Jun: 216 kWh</strong>
+          <span id="kpi-selected-cost" class="text-[11px] text-emerald-800 font-medium">Est. Bill: ₱3,095.28</span>
+        </div>
+      </div>
+
+
+      <!-- Interactive Bar Chart Canvas -->
+      <div class="bg-[#fcfaf8] rounded-3xl p-4 sm:p-6 border border-brand-line">
+        <!-- Chart Legend -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 text-xs">
+          <div class="flex items-center gap-5">
+            <span class="inline-flex items-center gap-2 font-medium text-brand-muted">
+              <span class="w-3 h-3 rounded-sm bg-neutral-300 inline-block"></span>
+              Actual History (Jan–May 2026)
+            </span>
+            <span class="inline-flex items-center gap-2 font-semibold text-brand-ink">
+              <span class="w-3 h-3 rounded-sm bg-gradient-to-t from-brand-orange to-brand-orangeLight inline-block"></span>
+              Predicted Next 6 Months (Jun–Nov 2026)
+            </span>
+          </div>
+          <span class="text-[11px] text-brand-muted">Click or hover any bar to inspect monthly estimate</span>
+        </div>
+
+
+        <!-- Bar Columns Container (11 Months: 5 Historical + 6 Predicted) -->
+        <div class="overflow-x-auto pb-2">
+          <div id="chart-bars" class="min-w-[640px] h-64 grid grid-cols-11 gap-2 sm:gap-3 items-end pt-8 px-2 border-b border-brand-line relative">
+            <!-- Bars injected cleanly via JS -->
+          </div>
+        </div>
+      </div>
+
+
+    </section>
+
+
+    <!-- ==================== B. ALERTS / EMESSAGE INBOX ==================== -->
+    <section id="alerts-section" class="bg-white rounded-[28px] p-6 sm:p-8 border border-brand-line shadow-card">
+
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-brand-line">
+        <div>
+          <div class="inline-flex items-center gap-2 bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full mb-2">
+            EMessage Integration · Smart-Meter Alerts
+          </div>
+          <h2 class="font-display font-bold text-2xl sm:text-3xl text-brand-ink tracking-tight">
+            Alerts <span class="text-brand-orange">Inbox</span>
+          </h2>
+          <p class="text-xs sm:text-sm text-brand-muted mt-1">
+            Plain-language notices delivered via <strong class="text-brand-ink">EMessage</strong> when unusual usage or meter events are detected on your account.
+          </p>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          <span id="alert-unread-badge" class="hidden font-display font-bold text-xs bg-brand-orange text-white px-2.5 py-1 rounded-full"></span>
+          <button onclick="markAllAlertsRead()" class="px-4 py-2 rounded-full border border-brand-line text-brand-ink font-medium text-xs hover:bg-brand-tint hover:border-brand-orange/40 transition-all cursor-pointer">
+            Mark all read
+          </button>
+        </div>
+      </div>
+
+      <!-- Alerts List -->
+      <div id="alerts-list" class="mt-4 space-y-3">
+        <!-- Injected by JS -->
+      </div>
+
+      <!-- Empty State (hidden by default) -->
+      <div id="alerts-empty" class="hidden py-10 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-brand-tint text-brand-orange flex items-center justify-center mx-auto mb-4">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+        </div>
+        <h3 class="font-display font-bold text-lg text-brand-ink mb-1">No alerts</h3>
+        <p class="text-sm text-brand-muted max-w-sm mx-auto">If your usage suddenly jumps, or your meter stops recording, you'll get a plain-language message here before your bill closes.</p>
+      </div>
+
+      <p class="mt-5 text-xs text-brand-muted border-t border-brand-line pt-4">
+        Alerts are delivered through <strong class="text-brand-ink">EMessage (simulated)</strong>. In a live deployment, these also arrive as SMS or push notifications to your registered mobile number.
+      </p>
+    </section>
+
+
+    <!-- ==================== C. EREPORT — REPORT A CONCERN ==================== -->
+    <section id="report-section" class="bg-white rounded-[28px] p-6 sm:p-8 border border-brand-line shadow-card">
+
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-brand-line">
+        <div>
+          <div class="inline-flex items-center gap-2 bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full mb-2">
+            EReport Integration · Concern Filing
+          </div>
+          <h2 class="font-display font-bold text-2xl sm:text-3xl text-brand-ink tracking-tight">
+            Report a <span class="text-brand-orange">Concern</span>
+          </h2>
+          <p class="text-xs sm:text-sm text-brand-muted mt-1">
+            Filed reports go directly to Meralco staff for review through <strong class="text-brand-ink">EReport</strong> and are never shown to other customers.
+          </p>
+        </div>
+      </div>
+
+      <!-- Success State -->
+      <div id="report-sent" class="hidden py-6">
+        <div class="p-6 rounded-2xl bg-brand-tint/60 border border-brand-orange/20 text-center">
+          <div class="w-12 h-12 rounded-2xl bg-brand-orange text-white flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <p class="text-xs text-brand-muted mb-1">Report received</p>
+          <h3 class="font-display font-bold text-xl text-brand-ink mb-2">Thanks. Meralco staff will review it.</h3>
+          <p class="text-sm text-brand-muted mb-4">Reference <strong id="report-ticket-ref" class="text-brand-orange font-mono"></strong>, filed through EReport <span id="report-source-label" class="text-brand-muted">(simulated)</span>.</p>
+          <button onclick="resetReportForm()" class="px-6 py-2.5 rounded-xl bg-brand-ink text-white font-display font-semibold text-sm hover:bg-brand-orange transition-colors cursor-pointer">
+            Report something else
+          </button>
+        </div>
+      </div>
+
+      <!-- Form State -->
+      <form id="report-form" novalidate class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- Category Selection -->
+        <div class="space-y-3">
+          <p class="font-semibold text-sm text-brand-ink mb-3">What is it about?</p>
+          <label id="cat-meter_issue" class="flex gap-3 items-start p-4 rounded-2xl border border-brand-line bg-[#fcfaf8] cursor-pointer hover:border-brand-orange/50 hover:bg-brand-tint/40 transition-all">
+            <input type="radio" name="report-category" value="meter_issue" class="mt-0.5 accent-brand-orange">
+            <span>
+              <strong class="block font-semibold text-brand-ink text-sm">My meter seems wrong</strong>
+              <small class="text-brand-muted text-xs">Not recording, damaged, or readings look off</small>
+            </span>
+          </label>
+          <label id="cat-suspected_jumper" class="flex gap-3 items-start p-4 rounded-2xl border border-brand-line bg-[#fcfaf8] cursor-pointer hover:border-brand-orange/50 hover:bg-brand-tint/40 transition-all">
+            <input type="radio" name="report-category" value="suspected_jumper" class="mt-0.5 accent-brand-orange">
+            <span>
+              <strong class="block font-semibold text-brand-ink text-sm">Possible illegal connection nearby</strong>
+              <small class="text-brand-muted text-xs">Wires tapped to a post or line</small>
+            </span>
+          </label>
+          <label id="cat-safety_hazard" class="flex gap-3 items-start p-4 rounded-2xl border border-brand-line bg-[#fcfaf8] cursor-pointer hover:border-brand-orange/50 hover:bg-brand-tint/40 transition-all">
+            <input type="radio" name="report-category" value="safety_hazard" class="mt-0.5 accent-brand-orange">
+            <span>
+              <strong class="block font-semibold text-brand-ink text-sm">Safety hazard</strong>
+              <small class="text-brand-muted text-xs">Sagging or sparking lines, exposed wires</small>
+            </span>
+          </label>
+          <label id="cat-other" class="flex gap-3 items-start p-4 rounded-2xl border border-brand-line bg-[#fcfaf8] cursor-pointer hover:border-brand-orange/50 hover:bg-brand-tint/40 transition-all">
+            <input type="radio" name="report-category" value="other" class="mt-0.5 accent-brand-orange">
+            <span>
+              <strong class="block font-semibold text-brand-ink text-sm">Something else</strong>
+            </span>
+          </label>
+        </div>
+
+        <!-- Note & Submit -->
+        <div class="flex flex-col justify-between gap-5">
+          <div class="space-y-2">
+            <label class="font-semibold text-sm text-brand-ink block">Details <span class="font-normal text-brand-muted">(optional)</span></label>
+            <textarea id="report-note" rows="5" maxlength="500" placeholder="Where is it, and what did you see?" class="w-full px-4 py-3 rounded-2xl border border-brand-line bg-[#fcfaf8] text-sm text-brand-ink outline-none focus:border-brand-orange resize-y transition-colors"></textarea>
+            <div class="flex justify-end text-xs text-brand-muted"><span id="note-counter">0</span>/500</div>
+          </div>
+          <div>
+            <p id="report-error" class="hidden text-xs text-[#d93a00] font-medium mb-3"></p>
+            <button type="submit" id="report-submit-btn" class="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-orange to-brand-orangeLight text-white font-display font-semibold text-base shadow-orange-glow hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer">
+              Send Report via EReport
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </section>
+
+
+    <!-- ==================== D. BOTTOM 2-COLUMN GRID: LEFT (ENERGY TOOLS & PAYMENT) & RIGHT (MERALCO NEWS) ==================== -->
+    <section id="bottom-hub" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+     
+      <!-- BOTTOM LEFT (5 Cols): Smart Appliance Cost Estimator & Payment QR / Hotline Card -->
+      <div class="lg:col-span-5 bg-white rounded-[28px] p-6 sm:p-8 border border-brand-line shadow-card flex flex-col justify-between space-y-6">
+        <div class="space-y-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="inline-block bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full mb-2">
+                Smart Energy Tools
+              </span>
+              <h2 class="font-display font-bold text-xl sm:text-2xl text-brand-ink">
+                Appliance & <span class="text-brand-orange">Quick Pay</span>
+              </h2>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-brand-tint text-brand-orange flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            </div>
+          </div>
+
+
+          <p class="text-xs sm:text-sm text-brand-muted leading-relaxed">
+            Simulate how adjusting your daily aircon usage impacts next month's predicted bill at <strong class="text-brand-ink">₱14.33/kWh</strong>.
+          </p>
+
+
+          <!-- Interactive Appliance Simulator -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-[#fcfaf8] border border-brand-line space-y-4">
+            <div class="flex items-center justify-between">
+              <label for="ac-hours" class="text-xs font-semibold text-brand-ink">1.0 HP Inverter Aircon Daily Use</label>
+              <span id="ac-hours-val" class="font-display font-bold text-sm text-brand-orange bg-brand-tint px-2.5 py-0.5 rounded-lg">8 hrs / day</span>
+            </div>
+            <input id="ac-hours" type="range" min="2" max="16" value="8" class="w-full">
+            <div class="grid grid-cols-2 gap-3 pt-1">
+              <div class="bg-white p-3 rounded-xl border border-brand-line">
+                <span class="text-[11px] text-brand-muted block">Monthly Appliance kWh</span>
+                <strong id="ac-kwh-out" class="font-display font-bold text-base text-brand-ink">156 kWh</strong>
+              </div>
+              <div class="bg-white p-3 rounded-xl border border-brand-line">
+                <span class="text-[11px] text-brand-muted block">Est. Monthly Cost</span>
+                <strong id="ac-cost-out" class="font-display font-bold text-base text-brand-orange">₱2,235.48</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Payment QR & Customer Support Strip (Matches Bottom of Attached Bill) -->
+        <div class="pt-5 border-t border-brand-line space-y-4">
+          <div class="flex items-center gap-4 bg-brand-tint/60 p-4 rounded-2xl border border-brand-orange/20">
+            <!-- Clean Vector QR Representation for CAN 1234567890 -->
+            <div class="w-16 h-16 rounded-xl bg-white p-1.5 border border-brand-line shrink-0 grid place-items-center" title="QR code contains your CAN: 1234567890">
+              <svg class="w-full h-full text-brand-ink" viewBox="0 0 36 36" fill="currentColor">
+                <path d="M2 2h10v10H2V2zm2 2v6h6V4H4zm2 2h2v2H6V6zm18-4h10v10H24V2zm2 2v6h6V4h-6zm2 2h2v2h-2V6zM2 24h10v10H2V24zm2 2v6h6v-6H4zm2 2h2v2H6v-2zm10-24h2v4h-2V4zm4 2h2v6h-2V6zm-4 6h4v2h-4v-2zm-2 4h6v2h-6v-2zm8 0h4v4h-4v-4zm6 0h4v2h-4v-2zM14 20h4v4h-4v-4zm6 2h4v2h-4v-2zm6 2h6v2h-6v-2zm-10 4h4v6h-4v-6zm6 2h4v4h-4v-4zm6 0h4v4h-4v-4z"/>
+              </svg>
+            </div>
+            <div class="text-xs space-y-1">
+              <div class="font-display font-bold text-brand-ink">Instant CAN QR Pay</div>
+              <p class="text-brand-muted leading-snug">Scan at any Meralco Business Center or accredited payment partner. CAN: <strong class="text-brand-ink">1234567890</strong></p>
+            </div>
+          </div>
+
+
+          <div class="flex items-center justify-between text-xs text-brand-muted">
+            <span>24/7 Hotline: <strong class="text-brand-ink">16211</strong></span>
+            <button onclick="showToast('Connecting to Meralco Facebook Messenger Assistant...')" class="text-brand-orange font-semibold hover:underline cursor-pointer">
+              May tanong sa bill? Chat us →
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- BOTTOM RIGHT (7 Cols): LATEST NEWS REGARDING MERALCO -->
+      <div class="lg:col-span-7 bg-white rounded-[28px] p-6 sm:p-8 border border-brand-line shadow-card flex flex-col justify-between">
+        <div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-5 mb-5 border-b border-brand-line">
+            <div>
+              <span class="inline-block bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full mb-2">
+                Meralco Newsroom & Bulletins
+              </span>
+              <h2 class="font-display font-bold text-xl sm:text-2xl text-brand-ink">
+                Latest News Regarding <span class="text-brand-orange">Meralco</span>
+              </h2>
+            </div>
+            <span class="text-xs font-medium text-brand-muted">Updated November 2026</span>
+          </div>
+
+
+          <!-- News List -->
+          <div class="space-y-4">
+           
+            <!-- News Item 1 -->
+            <article onclick="openNewsModal(0)" class="group p-4 sm:p-5 rounded-2xl bg-[#fcfaf8] hover:bg-brand-tint/60 border border-brand-line hover:border-brand-orange/40 transition-all cursor-pointer">
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <span class="text-[11px] font-semibold text-brand-orange bg-white px-2.5 py-0.5 rounded-full border border-brand-line">Rates & Refunds</span>
+                <time class="text-xs text-brand-muted">November 2026</time>
+              </div>
+              <h3 class="font-display font-bold text-base sm:text-lg text-brand-ink group-hover:text-brand-orange transition-colors">
+                November 2026 Rate Update: ₱2.64-Billion AWAT 3 Refund Cushions Generation Charge
+              </h3>
+              <p class="text-xs sm:text-sm text-brand-muted mt-1.5 line-clamp-2">
+                Residential customers continue to benefit from the ERC-approved distribution refund offset and lower transmission charges this billing month.
+              </p>
+            </article>
+
+
+            <!-- News Item 2 -->
+            <article onclick="openNewsModal(1)" class="group p-4 sm:p-5 rounded-2xl bg-[#fcfaf8] hover:bg-brand-tint/60 border border-brand-line hover:border-brand-orange/40 transition-all cursor-pointer">
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">Customer Advisory</span>
+                <time class="text-xs text-brand-muted">November 2026</time>
+              </div>
+              <h3 class="font-display font-bold text-base sm:text-lg text-brand-ink group-hover:text-brand-orange transition-colors">
+                Extended Disconnection Protection & Flexible Payment Deadlines for ≤200 kWh Households
+              </h3>
+              <p class="text-xs sm:text-sm text-brand-muted mt-1.5 line-clamp-2">
+                Households consuming 200 kWh and below receive extended grace periods and zero-fee installment options via Meralco Go.
+              </p>
+            </article>
+
+
+            <!-- News Item 3 -->
+            <article onclick="openNewsModal(2)" class="group p-4 sm:p-5 rounded-2xl bg-[#fcfaf8] hover:bg-brand-tint/60 border border-brand-line hover:border-brand-orange/40 transition-all cursor-pointer">
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <span class="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60">Grid Maintenance</span>
+                <time class="text-xs text-brand-muted">November 12, 2026</time>
+              </div>
+              <h3 class="font-display font-bold text-base sm:text-lg text-brand-ink group-hover:text-brand-orange transition-colors">
+                Routine Smart-Meter Inspection & Storm-Hardening Upgrades in Metro Manila
+              </h3>
+              <p class="text-xs sm:text-sm text-brand-muted mt-1.5 line-clamp-2">
+                Meralco field crews are conducting scheduled metering facility inspections and pole upgrades to maintain 99.98% grid reliability.
+              </p>
+            </article>
+
+
+          </div>
+        </div>
+
+
+        <div class="pt-4 mt-4 border-t border-brand-line flex items-center justify-between text-xs">
+          <span class="text-brand-muted">Click any headline to read the full Meralco bulletin</span>
+          <a href="https://www.meralco.com.ph" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-orange hover:underline">
+            www.meralco.com.ph ↗
+          </a>
+        </div>
+      </div>
+
+
+    </section>
+
+
+  </main>
+
+
+  <!-- ==================== 4. COMPACT FOOTER ==================== -->
+  <footer class="bg-brand-ink text-white mt-12 py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg text-white grid place-items-center font-display font-bold text-sm bg-gradient-to-br from-brand-orange to-brand-orangeLight">M</div>
+        <span>© 2026 Manila Electric Company (Meralco). All rights reserved.</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <span>Hotline: <strong class="text-white">16211</strong></span>
+        <span>customercare@meralco.com.ph</span>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ==================== MODALS & TOAST ==================== -->
+  <!-- News Reader Modal -->
+  <div id="news-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-brand-ink/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-7 border border-brand-line shadow-2xl relative">
+      <button onclick="closeNewsModal()" aria-label="Close modal" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-brand-tint text-brand-ink hover:bg-brand-orange hover:text-white flex items-center justify-center transition-colors cursor-pointer">✕</button>
+      <span id="modal-tag" class="inline-block bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full mb-2">Advisory</span>
+      <div id="modal-date" class="text-xs text-brand-muted mb-2">November 2026</div>
+      <h3 id="modal-title" class="font-display font-bold text-xl text-brand-ink leading-snug mb-3">Headline</h3>
+      <p id="modal-body" class="text-sm text-brand-muted leading-relaxed mb-6">Article details</p>
+      <button onclick="closeNewsModal()" class="w-full py-3 rounded-xl bg-brand-orange text-white font-display font-semibold text-sm hover:bg-[#e55f00] transition-colors cursor-pointer">Close Bulletin</button>
+    </div>
+  </div>
+
+
+  <!-- Quick Pay Modal -->
+  <div id="pay-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-brand-ink/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-7 border border-brand-line shadow-2xl relative">
+      <button onclick="closePayModal()" aria-label="Close payment modal" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-brand-tint text-brand-ink hover:bg-brand-orange hover:text-white flex items-center justify-center transition-colors cursor-pointer">✕</button>
+      <span class="inline-block bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full mb-2">Meralco Go Express Pay</span>
+      <h3 class="font-display font-bold text-2xl text-brand-ink mb-1">Settle Electric Bill</h3>
+      <p class="text-xs text-brand-muted mb-5">CAN: <strong class="text-brand-ink">1234567890</strong> · OLIVIA DELA CRUZ</p>
+     
+      <div class="p-4 rounded-2xl bg-brand-tint/70 border border-brand-orange/20 flex items-center justify-between mb-5">
+        <span class="text-xs font-semibold text-brand-ink">Amount to Pay</span>
+        <span id="pay-modal-amount" class="font-display font-extrabold text-2xl text-brand-orange">₱ 2,866.90</span>
+      </div>
+
+
+      <div class="space-y-2.5 mb-6 text-xs">
+        <label class="flex items-center justify-between p-3.5 rounded-xl border border-brand-orange bg-brand-tint/30 cursor-pointer">
+          <span class="font-semibold text-brand-ink">GCash / Maya E-Wallet (Zero Fee)</span>
+          <input type="radio" name="paymethod" checked class="accent-brand-orange">
+        </label>
+        <label class="flex items-center justify-between p-3.5 rounded-xl border border-brand-line hover:bg-brand-tint/20 cursor-pointer">
+          <span class="font-semibold text-brand-ink">Debit / Credit Card (Visa / Mastercard)</span>
+          <input type="radio" name="paymethod" class="accent-brand-orange">
+        </label>
+      </div>
+
+
+      <button onclick="closePayModal(); showToast('✓ Demo payment confirmed! Official e-Receipt generated.')" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-brand-orange to-brand-orangeLight text-white font-display font-semibold text-sm shadow-orange-glow cursor-pointer">
+        Confirm Payment
+      </button>
+    </div>
+  </div>
+
+
+  <!-- Switch Account Modal -->
+  <div id="account-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-brand-ink/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-7 border border-brand-line shadow-2xl relative">
+      <button onclick="closeAccountModal()" aria-label="Close account modal" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-brand-tint text-brand-ink hover:bg-brand-orange hover:text-white flex items-center justify-center transition-colors cursor-pointer">✕</button>
+      <span class="inline-block bg-brand-tint text-brand-orange font-semibold text-xs px-3 py-1 rounded-full mb-2">Account Manager</span>
+      <h3 class="font-display font-bold text-xl text-brand-ink mb-4">Enrolled Meralco Accounts</h3>
+      <div class="p-4 rounded-2xl border-2 border-brand-orange bg-brand-tint/40 mb-4">
+        <div class="flex items-center justify-between">
+          <strong class="font-display text-sm text-brand-ink">OLIVIA DELA CRUZ</strong>
+          <span class="text-[11px] font-semibold bg-brand-orange text-white px-2 py-0.5 rounded-full">Active</span>
+        </div>
+        <div class="text-xs text-brand-muted mt-1">CAN: 1234567890 · Sta. Lucia, Manila</div>
+      </div>
+      <p class="text-xs text-brand-muted mb-4">Want to enroll another 10-digit Customer Account Number?</p>
+      <div class="flex gap-2">
+        <input id="new-can-input" inputmode="numeric" maxlength="10" placeholder="Enter 10-digit CAN" class="flex-1 px-3.5 py-2.5 rounded-xl border border-brand-line text-sm outline-none focus:border-brand-orange">
+        <button onclick="enrollNewCan()" class="px-4 py-2.5 rounded-xl bg-brand-ink text-white font-display font-semibold text-xs hover:bg-brand-orange transition-colors cursor-pointer">Add CAN</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 translate-y-20 opacity-0 pointer-events-none transition-all duration-300 bg-brand-ink text-white px-5 py-3.5 rounded-2xl shadow-xl border border-white/10 flex items-center gap-3 text-sm font-medium">
+    <span class="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
+    <span id="toast-msg">Notification</span>
+  </div>
+
+
+  <!-- ==================== INTERACTIVE JAVASCRIPT ==================== -->
+  <script>
+    // ==================== ALERTS / EMESSAGE ====================
+    const alertsData = [
+      {
+        id: 'a001',
+        detected_at: '2026-11-12T14:35:00+08:00',
+        title: 'Unusual consumption spike detected',
+        customer_text: 'Your meter recorded a significant jump in usage this afternoon — 3.2× your usual rate. This is often caused by a faulty appliance or an unexpected load. No action is needed right now, but check your appliances if the spike continues.',
+        emessage_source: 'simulated',
+        read: false
+      },
+      {
+        id: 'a002',
+        detected_at: '2026-11-10T08:12:00+08:00',
+        title: 'Meter reading gap — 4 hours',
+        customer_text: 'Your smart meter did not transmit readings between 11 PM and 3 AM on November 9. The gap has been filled using an interpolated estimate. If you notice this recurring, please report it using the form below.',
+        emessage_source: 'simulated',
+        read: false
+      },
+      {
+        id: 'a003',
+        detected_at: '2026-11-05T17:00:00+08:00',
+        title: 'You are on track for a lower bill',
+        customer_text: 'Great news — your projected bill for this cycle has dropped by ₱186 compared to the same period last month. Your consumption pattern suggests the inverter aircon change is working.',
+        emessage_source: 'simulated',
+        read: true
+      }
+    ];
+
+    function formatAlertTime(isoStr) {
+      const d = new Date(isoStr);
+      return d.toLocaleString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderAlerts() {
+      const list = document.getElementById('alerts-list');
+      const empty = document.getElementById('alerts-empty');
+      const badge = document.getElementById('alert-unread-badge');
+      const navDot = document.getElementById('nav-alert-dot');
+
+      const unread = alertsData.filter(a => !a.read).length;
+      if (unread > 0) {
+        badge.textContent = unread + ' unread';
+        badge.classList.remove('hidden');
+        navDot.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+        navDot.classList.add('hidden');
+      }
+
+      if (alertsData.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      list.innerHTML = alertsData.map(a => `
+        <div class="p-5 rounded-2xl border ${a.read ? 'border-brand-line bg-[#fcfaf8]' : 'border-brand-orange/30 bg-brand-tint/40'} transition-colors">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <p class="text-xs text-brand-muted">${formatAlertTime(a.detected_at)} · <span class="text-brand-ink font-medium">via EMessage (${a.emessage_source})</span></p>
+            ${!a.read ? '<span class="text-[10px] font-bold text-brand-orange bg-brand-tint border border-brand-orange/30 px-2 py-0.5 rounded-full">NEW</span>' : ''}
+          </div>
+          <h3 class="font-display font-semibold text-base text-brand-ink mb-1">${a.title}</h3>
+          <p class="text-sm text-brand-muted leading-relaxed">${a.customer_text}</p>
+        </div>
+      `).join('');
+    }
+
+    function markAllAlertsRead() {
+      alertsData.forEach(a => a.read = true);
+      renderAlerts();
+      showToast('All alerts marked as read.');
+    }
+
+    renderAlerts();
+
+    // ==================== REPORT FORM / EREPORT ====================
+    const reportCategoryLabels = {
+      meter_issue: 'Meter Issue',
+      suspected_jumper: 'Suspected Illegal Connection',
+      safety_hazard: 'Safety Hazard',
+      other: 'Other'
+    };
+
+    // Highlight selected category label
+    document.querySelectorAll('input[name="report-category"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        document.querySelectorAll('input[name="report-category"]').forEach(r => {
+          const lbl = r.closest('label');
+          if (r.checked) {
+            lbl.classList.add('border-brand-orange', 'bg-brand-tint/60');
+            lbl.classList.remove('border-brand-line', 'bg-[#fcfaf8]');
+          } else {
+            lbl.classList.remove('border-brand-orange', 'bg-brand-tint/60');
+            lbl.classList.add('border-brand-line', 'bg-[#fcfaf8]');
+          }
+        });
+        document.getElementById('report-error').classList.add('hidden');
+      });
+    });
+
+    // Note character counter
+    const reportNoteEl = document.getElementById('report-note');
+    reportNoteEl.addEventListener('input', () => {
+      document.getElementById('note-counter').textContent = reportNoteEl.value.length;
+    });
+
+    // Report form submit
+    document.getElementById('report-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const selected = document.querySelector('input[name="report-category"]:checked');
+      const errorEl = document.getElementById('report-error');
+      if (!selected) {
+        errorEl.textContent = 'Please pick what the concern is about.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      errorEl.classList.add('hidden');
+      const btn = document.getElementById('report-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      setTimeout(() => {
+        const ticketNum = 'ER-' + Date.now().toString(36).toUpperCase().slice(-8);
+        const catLabel = reportCategoryLabels[selected.value] || 'Other';
+        document.getElementById('report-ticket-ref').textContent = `${ticketNum} (${catLabel})`;
+        document.getElementById('report-form').classList.add('hidden');
+        document.getElementById('report-sent').classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Send Report via EReport';
+        showToast('✓ Report filed via EReport. Reference: ' + ticketNum);
+      }, 900);
+    });
+
+    function resetReportForm() {
+      document.querySelectorAll('input[name="report-category"]').forEach(r => {
+        r.checked = false;
+        const lbl = r.closest('label');
+        lbl.classList.remove('border-brand-orange', 'bg-brand-tint/60');
+        lbl.classList.add('border-brand-line', 'bg-[#fcfaf8]');
+      });
+      reportNoteEl.value = '';
+      document.getElementById('note-counter').textContent = '0';
+      document.getElementById('report-error').classList.add('hidden');
+      document.getElementById('report-form').classList.remove('hidden');
+      document.getElementById('report-sent').classList.add('hidden');
+    }
+
+    // 1. Mobile Menu Toggle
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+
+
+    // 2. Expandable Bill Summary Drawer Toggle
+    let isBillOpen = false;
+    function toggleBillSummary() {
+      isBillOpen = !isBillOpen;
+      const drawer = document.getElementById('bill-summary-drawer');
+      const chevron = document.getElementById('bill-chevron');
+      const btn = document.getElementById('bill-toggle-btn');
+      const label = document.getElementById('drawer-btn-label');
+
+
+      drawer.classList.toggle('open', isBillOpen);
+      chevron.style.transform = isBillOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+      btn.setAttribute('aria-expanded', isBillOpen);
+      label.textContent = isBillOpen ? 'Hide Bill Summary' : 'View Bill Summary';
+    }
+
+
+    // 3. Bill Scenario Switcher (Exact Attached Invoice ₱2,866.90 vs ₱3,364.86 Scenario)
+    const billScenarios = {
+      actual: {
+        price: '2,866.90',
+        kwh: '200 kWh',
+        rate: '₱14.33/kWh',
+        delta: '▼ 11%',
+        deltaPositive: false,
+        dailyCost: '₱95.60 / day',
+        currRead: '47,843',
+        dailyKwh: '6.67 kWh',
+        dailyPhp: '₱95.6',
+        co2: '0.1387 tCO₂',
+        trees: '6 Trees**',
+        gen: '1,758.84',
+        trans: '281.48',
+        loss: '159.88',
+        dist: '298.00',
+        tax: '262.14',
+        uc: '64.32',
+        fit: '40.22'
+      },
+      alt: {
+        price: '3,364.86',
+        kwh: '235 kWh',
+        rate: '₱14.32/kWh',
+        delta: '▲ 17.5%',
+        deltaPositive: true,
+        dailyCost: '₱112.16 / day',
+        currRead: '47,878',
+        dailyKwh: '7.83 kWh',
+        dailyPhp: '₱112.2',
+        co2: '0.1630 tCO₂',
+        trees: '7 Trees**',
+        gen: '2,066.64',
+        trans: '330.74',
+        loss: '187.86',
+        dist: '348.50',
+        tax: '306.40',
+        uc: '75.58',
+        fit: '47.12'
+      }
+    };
+
+
+    function setBillScenario(key) {
+      const s = billScenarios[key];
+      document.getElementById('hero-bill-price').textContent = s.price;
+      document.getElementById('hero-bill-kwh').textContent = s.kwh;
+      document.getElementById('hero-bill-rate').textContent = s.rate;
+      const deltaEl = document.getElementById('hero-bill-delta');
+      deltaEl.textContent = s.delta;
+      deltaEl.className = s.deltaPositive
+        ? 'text-[10px] font-bold text-amber-800 bg-amber-100/90 px-1.5 py-0.5 rounded-md tabular-nums'
+        : 'text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-md tabular-nums';
+      document.getElementById('hero-daily-cost').textContent = s.dailyCost;
+      document.getElementById('pay-modal-amount').textContent = '₱ ' + s.price;
+
+
+      // Update drawer figures
+      document.getElementById('inv-curr-read').textContent = s.currRead;
+      document.getElementById('inv-actual-kwh').textContent = s.kwh;
+      document.getElementById('inv-daily-kwh').textContent = s.dailyKwh;
+      document.getElementById('inv-daily-php').textContent = s.dailyPhp;
+      document.getElementById('env-kwh').textContent = s.kwh;
+      document.getElementById('env-co2').textContent = s.co2;
+      document.getElementById('env-trees').textContent = s.trees;
+      document.getElementById('comp-period-total').textContent = s.price;
+      document.getElementById('comp-gen').textContent = s.gen;
+      document.getElementById('comp-trans').textContent = s.trans;
+      document.getElementById('comp-loss').textContent = s.loss;
+      document.getElementById('comp-dist').textContent = s.dist;
+      document.getElementById('comp-tax').textContent = s.tax;
+      document.getElementById('comp-uc').textContent = s.uc;
+      document.getElementById('comp-fit').textContent = s.fit;
+      document.getElementById('comp-total-due').textContent = '₱ ' + s.price;
+
+
+      // Toggle button active styles
+      const btnActual = document.getElementById('preset-actual');
+      const btnAlt = document.getElementById('preset-alt');
+      if (key === 'actual') {
+        btnActual.className = 'px-3.5 py-1.5 rounded-xl text-xs font-display font-semibold bg-brand-orange text-white shadow-sm transition-all cursor-pointer';
+        btnAlt.className = 'px-3.5 py-1.5 rounded-xl text-xs font-display font-semibold text-brand-muted hover:text-brand-ink transition-all cursor-pointer';
+      } else {
+        btnAlt.className = 'px-3.5 py-1.5 rounded-xl text-xs font-display font-semibold bg-brand-orange text-white shadow-sm transition-all cursor-pointer';
+        btnActual.className = 'px-3.5 py-1.5 rounded-xl text-xs font-display font-semibold text-brand-muted hover:text-brand-ink transition-all cursor-pointer';
+      }
+    }
+
+
+    // 4. 6-Month Consumption Prediction Bar Graph (with Jan-May 2026 History + Jun-Nov 2026 Prediction)
+    const monthlySeries = [
+      { month: 'Jan', kwh: 157, type: 'actual' },
+      { month: 'Feb', kwh: 156, type: 'actual' },
+      { month: 'Mar', kwh: 146, type: 'actual' },
+      { month: 'Apr', kwh: 180, type: 'actual' },
+      { month: 'May', kwh: 200, type: 'actual' },
+      { month: 'Jun', kwh: 216, type: 'pred' },
+      { month: 'Jul', kwh: 195, type: 'pred' },
+      { month: 'Aug', kwh: 182, type: 'pred' },
+      { month: 'Sep', kwh: 178, type: 'pred' },
+      { month: 'Oct', kwh: 185, type: 'pred' },
+      { month: 'Nov', kwh: 192, type: 'pred' }
+    ];
+
+
+    let forecastMode = 'baseline';
+    let selectedBarIndex = 5; // Default highlight: Jun (first predicted month)
+
+
+    function renderBarChart() {
+      const container = document.getElementById('chart-bars');
+      container.innerHTML = '';
+      const factor = forecastMode === 'ecosaver' ? 0.88 : 1.0;
+      const ratePerKwh = 14.33;
+      const maxKwh = 240;
+
+
+      let predTotalKwh = 0;
+      let peakMonth = { month: '', kwh: 0 };
+
+
+      monthlySeries.forEach((item, idx) => {
+        const val = item.type === 'pred' ? Math.round(item.kwh * factor) : item.kwh;
+        const estPeso = (val * ratePerKwh).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+
+        if (item.type === 'pred') {
+          predTotalKwh += val;
+          if (val > peakMonth.kwh) peakMonth = { month: item.month, kwh: val };
+        }
+
+
+        const heightPct = Math.max(18, Math.round((val / maxKwh) * 100));
+        const isSelected = idx === selectedBarIndex;
+
+
+        const col = document.createElement('button');
+        col.type = 'button';
+        col.onclick = () => {
+          selectedBarIndex = idx;
+          renderBarChart();
+        };
+        col.className = 'group flex flex-col items-center justify-end h-full focus:outline-none cursor-pointer relative';
+
+
+        const barColorClass = item.type === 'actual'
+          ? (isSelected ? 'bg-neutral-500 ring-2 ring-brand-ink/20' : 'bg-neutral-300 group-hover:bg-neutral-400')
+          : (isSelected ? 'bg-gradient-to-t from-brand-orange to-brand-orangeLight ring-4 ring-brand-orange/25' : 'bg-gradient-to-t from-brand-orange/85 to-brand-orangeLight/90 group-hover:from-brand-orange group-hover:to-brand-orangeLight');
+
+
+        col.innerHTML = `
+          <span class="text-[11px] font-display font-bold mb-1.5 ${isSelected ? 'text-brand-orange scale-110' : 'text-brand-ink'} transition-transform">
+            ${val}
+          </span>
+          <div class="w-full max-w-[38px] rounded-t-xl bar-fill ${barColorClass}" style="height: ${heightPct}%;"></div>
+          <span class="text-[11px] font-semibold mt-2 ${item.type === 'pred' ? 'text-brand-orange' : 'text-brand-muted'}">
+            ${item.month}
+          </span>
+          <span class="text-[9px] uppercase tracking-tighter ${item.type === 'pred' ? 'text-brand-orange/80 font-semibold' : 'text-neutral-400'}">
+            ${item.type === 'pred' ? 'Pred' : 'Act'}
+          </span>
+        `;
+        container.appendChild(col);
+
+
+        if (isSelected) {
+          document.getElementById('kpi-selected-month').textContent = `${item.month}: ${val} kWh`;
+          document.getElementById('kpi-selected-cost').textContent = `${item.type === 'pred' ? 'Est. Bill' : 'Billed'}: ₱${estPeso}`;
+        }
+      });
+
+
+      document.getElementById('kpi-total-kwh').textContent = `${predTotalKwh.toLocaleString()} kWh`;
+      document.getElementById('kpi-total-php').textContent = `₱${Math.round(predTotalKwh * ratePerKwh).toLocaleString()}`;
+      document.getElementById('kpi-peak-month').textContent = `${peakMonth.month} (${peakMonth.kwh} kWh)`;
+    }
+
+
+    function setForecastMode(mode) {
+      forecastMode = mode;
+      const b1 = document.getElementById('mode-baseline');
+      const b2 = document.getElementById('mode-ecosaver');
+      if (mode === 'baseline') {
+        b1.className = 'px-3.5 py-2 rounded-xl text-xs font-display font-semibold bg-white text-brand-orange shadow-sm transition-all cursor-pointer';
+        b2.className = 'px-3.5 py-2 rounded-xl text-xs font-display font-semibold text-brand-muted hover:text-brand-ink transition-all cursor-pointer';
+      } else {
+        b2.className = 'px-3.5 py-2 rounded-xl text-xs font-display font-semibold bg-white text-emerald-700 shadow-sm transition-all cursor-pointer';
+        b1.className = 'px-3.5 py-2 rounded-xl text-xs font-display font-semibold text-brand-muted hover:text-brand-ink transition-all cursor-pointer';
+      }
+      renderBarChart();
+    }
+
+
+    // 5. Interactive Appliance Estimator Slider
+    const acSlider = document.getElementById('ac-hours');
+    acSlider.addEventListener('input', () => {
+      const hrs = Number(acSlider.value);
+      const monthlyKwh = Math.round(hrs * 0.65 * 30); // ~650W average inverter draw
+      const monthlyCost = (monthlyKwh * 14.33).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('ac-hours-val').textContent = `${hrs} hrs / day`;
+      document.getElementById('ac-kwh-out').textContent = `${monthlyKwh} kWh`;
+      document.getElementById('ac-cost-out').textContent = `₱${monthlyCost}`;
+    });
+
+
+    // 6. News Articles Data & Modal
+    const newsBulletins = [
+      {
+        tag: 'Rates & Refunds',
+        date: 'November 2026',
+        title: 'November 2026 Rate Update: ₱2.64-Billion AWAT 3 Refund Cushions Generation Charge',
+        body: 'Meralco customers continue to benefit from the Energy Regulatory Commission (ERC)-approved distribution refund (AWAT 3) alongside lower transmission charges. For a typical 200 kWh residential household, this helps stabilize the overall bill around ₱14.33/kWh.'
+      },
+      {
+        tag: 'Customer Advisory',
+        date: 'November 2026',
+        title: 'Extended Disconnection Protection & Flexible Payment Deadlines for ≤200 kWh Households',
+        body: 'In line with ERC consumer protection directives, residential customers with monthly consumption of 200 kWh and below are granted extended payment windows and convenient digital installment arrangements directly through Meralco Go or any Meralco Business Center.'
+      },
+      {
+        tag: 'Grid Maintenance',
+        date: 'November 12, 2026',
+        title: 'Routine Smart-Meter Inspection & Storm-Hardening Upgrades in Metro Manila',
+        body: 'Please be informed that Meralco field personnel are conducting routine maintenance and inspection of customer metering facilities across Manila and Quezon City this quarter. Always verify official Meralco IDs or check your Meralco Go app for scheduled advisories.'
+      }
+    ];
+
+
+    function openNewsModal(idx) {
+      const item = newsBulletins[idx];
+      document.getElementById('modal-tag').textContent = item.tag;
+      document.getElementById('modal-date').textContent = item.date;
+      document.getElementById('modal-title').textContent = item.title;
+      document.getElementById('modal-body').textContent = item.body;
+      const m = document.getElementById('news-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+    function closeNewsModal() {
+      const m = document.getElementById('news-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+
+    // 7. Express Pay & Switch Account Modals
+    function openPayModal() {
+      const m = document.getElementById('pay-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+    function closePayModal() {
+      const m = document.getElementById('pay-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+
+    function openAccountModal() {
+      const m = document.getElementById('account-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+    function closeAccountModal() {
+      const m = document.getElementById('account-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+    function enrollNewCan() {
+      const val = document.getElementById('new-can-input').value.replace(/\D/g, '');
+      if (val.length === 10) {
+        closeAccountModal();
+        showToast(`✓ CAN ${val} queued for verification!`);
+        document.getElementById('new-can-input').value = '';
+      } else {
+        showToast('Please enter a valid 10-digit Customer Account Number.');
+      }
+    }
+
+
+    // 8. Toast Helper
+    let toastTimeout;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      t.classList.remove('translate-y-20', 'opacity-0');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3400);
+    }
+
+
+    // Initialize chart on load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderBarChart();
+    });
+  </script>
+</body>
+</html>
+
